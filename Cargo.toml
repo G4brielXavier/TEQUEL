@@ -7,7 +7,7 @@ description = "A multi-layered byte-level encryption library built in Rust."
 license = "MIT"
 repository = "https://github.com/G4brielXavier/tequel-rs"
 readme = "README.md"
-keywords = ["cryptography", "encryption", "mac", "learning", "tool", "hash", "xor", "bytes"]
+keywords = ["cryptography", "encryption", "mac", "learning"]
 categories = ["cryptography", "algorithms"]
 
 [dependencies]
