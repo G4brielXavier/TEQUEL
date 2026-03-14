@@ -14,7 +14,6 @@
 
 - [Tequel](#tequel)
   - [Summary](#summary)
-  - [Security Notice](#security-notice)
   - [📊 Stress and Safety report](#-stress-and-safety-report)
     - [**1. Colision Test (Avalanche Test)**](#1-colision-test-avalanche-test)
     - [**2.** **Entropy Analize (Shannon Entropy)**](#2-entropy-analize-shannon-entropy)
@@ -23,11 +22,6 @@
   - [⁉️ Guide](#️-guide)
   - [Why the name 'Tequel'?](#why-the-name-tequel)
   - [License](#license)
-
-
-## Security Notice
-
-**Tequel** is an experimental cryptographic implementation and should not be used in production environments (if you want).
 
 
 ## 📊 Stress and Safety report
