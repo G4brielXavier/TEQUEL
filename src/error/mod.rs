@@ -16,6 +16,8 @@ pub enum TequelError {
 
     /// When key is don't provided or is different
     KeyError(String),
+
+    EmptyKey(String)
 }
 
 impl std::fmt::Display for TequelError {
@@ -25,7 +27,8 @@ impl std::fmt::Display for TequelError {
             TequelError::InvalidHex(s) => write!(f, "Hex is Invalid: {}", s),
             TequelError::InvalidMac => write!(f, "MACs not match. Data has changed! Key? Data?"),
             TequelError::InvalidUtf8 => write!(f, "Error UTF-8 convertion. Incorrect Key?"),
-            TequelError::KeyError(e) => write!(f, "Key Error: {}", e)
+            TequelError::KeyError(e) => write!(f, "Key Error: {}", e),
+            TequelError::EmptyKey(e) => write!(f, "Key is empty: {}", e),
         }
     }
 }

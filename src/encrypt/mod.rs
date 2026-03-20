@@ -4,6 +4,8 @@ use crate::hash::TequelHash;
 use crate::error::TequelError;
 use crate::rng::TequelRng;
 
+use zeroize::{Zeroize, ZeroizeOnDrop};
+
 /// TequelEncrypt is a struct that controls Encryption, it uses `Salt` and `Custom Iterations`.
 /// 
 /// You use this struct to use encrypt in Tequel.
@@ -14,7 +16,7 @@ use crate::rng::TequelRng;
 ///     let mut teq_encrypt: TequelEncrypt = TequelEncrypt::new();
 /// }
 /// ```
-#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, Zeroize, ZeroizeOnDrop)]
 pub struct TequelEncrypt {
     pub salt: String,
     pub iterations: u32,
@@ -92,7 +94,7 @@ impl TequelEncrypt {
 
         // if key is empty raise an KeyError
         if key_crypt.len() == 0 {
-            return Err(TequelError::KeyError("Key is empty".to_string()))
+            return Err(TequelError::EmptyKey("Key is empty".to_string()))
         }
 
         let a = 0x107912fau32.to_be_bytes(); // KEY_C
@@ -176,7 +178,7 @@ impl TequelEncrypt {
     
         // if key is empty
         if key.len() == 0 {
-            return Err(TequelError::KeyError("Key is empty".to_string()))
+            return Err(TequelError::EmptyKey("Key is empty".to_string()))
         }
 
         // CONSTANTS            

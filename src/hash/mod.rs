@@ -1,5 +1,7 @@
 use std::str::from_utf8;
 
+use zeroize::{Zeroize, ZeroizeOnDrop};
+
 /// TequelHash is a struct that controls Hashing, it has `Constants`, `Salt` and `Custom Iterations`. <br><br>
 /// Your functions are:
 /// - `dif_hash_string`
@@ -8,6 +10,7 @@ use std::str::from_utf8;
 /// - `dt_hash_bytes`
 /// - `is_valid_hash_from_string`
 /// - `is_valid_hash_from_bytes`
+#[derive(Debug, Zeroize, ZeroizeOnDrop, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct TequelHash {
     pub states: [u32; 12],
     pub salt: String,

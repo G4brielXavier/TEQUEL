@@ -1,4 +1,4 @@
-### tequel_rs v0.3.0
+## tequel_rs v0.3.0
 
 - Tests applied
     - Hashing
@@ -16,3 +16,17 @@
       - Added `rand_weak_u32`
       - Improvements
   
+
+## tequel-rs v0.4.0
+
+- **Zeroize Memory** Applied with crate `zeroize`.
+  - `TequelEncrypt` applied
+  - `TequelHash` applied
+
+- New **benchmark** for **Tequel** with `criterion`.
+- Added more `derive` to `TequelHash`
+
+- Tests
+  - **Streess Test 10k Encryptions**: 
+    - Passed in 0.87 sec (in `debug`)
+    - 

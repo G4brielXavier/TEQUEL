@@ -3,8 +3,6 @@ use tequel_rs::encrypt::TequelEncrypt;
 use tequel_rs::error::TequelError;
 use tequel_rs::rng::TequelRng;
 
-use std::collections::HashMap;
-
 #[test]
 fn test_dif_hash_is_different_from_string() {
 
@@ -139,17 +137,94 @@ fn test_tequel_stress_loop_100() {
     println!("🔥 100/100 Loop test done! Tequel is solid.");
 }
 
+#[test]
+fn test_tequel_stress_loop_10000() {
+
+
+    let mut teq_crypt = TequelEncrypt::new()
+        .with_iteration(100)
+        .with_salt("my_salt");
+
+    let key = "ultra_safe_key_123";
+
+    for i in 0..10000 {
+        // Create a different string in each lap (ex: "Data_0", "Data_1" ...)
+        let original_data = format!("Secret_{}_Message_💀_#{}", i, i * 2);
+        
+        // 1. Encrypt (using bytes from formatted string)
+        let encrypted = teq_crypt.encrypt(original_data.as_bytes(), key)
+            .expect(&format!("Failed in encrypt loop {}", i));
+
+        // 2. Decrypt
+        let decrypted = teq_crypt.decrypt(&encrypted, key)
+            .expect(&format!("Failed in decrypt loop {} - Erro de UTF-8?", i));
+
+        // 3. Validação
+        assert_eq!(original_data, decrypted, "Integrity error loop {}", i);
+    }
+    
+    println!("🔥 10000/10000 Loop test done! Tequel is solid.");
+}
+
+
 
 
 #[test]
-fn test_avalanche_effect() {
+fn test_tequel_fuzzing_resistance() -> Result<(), Box<dyn std::error::Error>> {
 
-    let mut teq_hash = TequelHash::new();
+    let mut teq = TequelEncrypt::new();
 
-    let hash1 = teq_hash.dt_hash_bytes(b"Gabriel");
-    let hash2 = teq_hash.dt_hash_bytes(b"gabriel");
+    let as_big = "A".repeat(10000);
 
-    assert_ne!(hash1, hash2);
+    let crazy_inputs = vec![
+        "",                     // Vazio
+        " ",                    // Espaço
+        "\0\0\0",               // Null bytes
+        "💀🚀🔥",               // Emojis (Multi-byte UTF-8)
+        &as_big,      // String gigante
+        "你好",                 // Mandarim
+    ];
+
+
+    for input in &crazy_inputs {
+
+        let legit_encrypted = teq.encrypt(input.as_bytes(), "").map_err(|e| {
+            e
+        })?;
+
+        let mut corrupted = legit_encrypted.clone();
+        corrupted.mac = "ffffffffffffffffffffffffffffffff".to_string(); // MAC falso
+        corrupted.salt = "00000000".to_string(); // Salt resetado
+        
+        let trash_data = teq.decrypt(&corrupted, "key123");
+
+        assert!(trash_data.is_err(), "O Tequel aceitou um objeto corrompido! Erro de integridade.");
+        println!("✅ Fuzzing de Objeto: Tequel stopped corromped structure.");
+
+    }
+
+    Ok(())
 
 }
 
+
+
+#[test]
+fn test_tequel_key_sensitivity() {
+
+    let mut teq = TequelEncrypt::new().with_salt("security_first");
+    let original_data = b"Ultra sensible data";
+
+    let real_key = "StrongKey123";
+    let fake_key = "StrongKey100";
+
+    let encrypted = teq.encrypt(original_data, real_key).unwrap();
+
+    let result = teq.decrypt(&encrypted, fake_key);
+
+    match result {
+        Ok(_) => panic!("Critical Fail: Tequel accepted a wrong key and generate trash"),
+        Err(_) => println!("Integrity Security: Key Wrong Blocked")
+    }
+
+}

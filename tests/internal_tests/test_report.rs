@@ -1,27 +1,8 @@
-use tequel_rs::hash::TequelHash;
+// use tequel_rs::hash::TequelHash;
 use std::num::ParseIntError;
 
-fn main() {
 
-    // to test entropy
-    test_entropy();
-
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-fn get_entropy(data: &[u8]) -> f64 {
+pub fn get_entropy(data: &[u8]) -> f64 {
     let mut frequen = [0usize; 256];
     let len = data.len() as f64;
 
@@ -42,13 +23,13 @@ fn get_entropy(data: &[u8]) -> f64 {
     entropy
 }
 
-fn test_entropy() {
+pub fn test_entropy() {
     let mut teq = TequelHash::new();
     let mut mar_de_dados = Vec::new();
 
-    println!("Generating 1MB encrypted data...");
+    println!("Generating 10MB encrypted data...");
 
-    for i in 0..32000 { // Gerando aprox. 1MB de hashes
+    for i in 0..240000 { // Gerando aprox. 10MB de hashes
         let input = format!("test_seed{}", i);
         let hash_hex = teq.dt_hash_string(&input);
         
