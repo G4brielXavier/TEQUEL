@@ -1,6 +1,6 @@
 [package]
 name = "tequel-rs"
-version = "0.5.7"
+version = "0.5.8"
 edition = "2024"
 authors = ["Gabriel 'dotxav' Xavier <dotxavket@gmail.com>"]
 description = "A high-performance, chaotic AEAD encryption engine built on the TQL-11 ARX primitive."
@@ -26,7 +26,7 @@ criterion = { version = "0.5", features = ["html_reports"] }
 [features]
 default = ["parallel"]
 parallel = ["dep:rayon"]
-serialization = ["dep:serde"]
+serde = ["dep:serde"]
 
 [[bench]]
 name = "tequel_bench"
