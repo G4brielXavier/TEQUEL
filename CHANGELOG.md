@@ -37,3 +37,8 @@
 - Tests with:
   - Latency & Throughput
   - Parallel Stress
+
+
+## tequel-rs v0.5.0
+
+- Added `WHITE_PAPER.md` with deep information about **TQL-11**

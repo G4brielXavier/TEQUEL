@@ -4,6 +4,9 @@ use crate::hash::TequelHash;
 use crate::error::TequelError;
 use crate::rng::TequelRng;
 
+#[cfg(feature = "serialization")]
+use serde::{Serialize, Deserialize};
+
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
 /// TequelEncrypt is a struct that controls Encryption, it uses `Salt` and `Custom Iterations`.
@@ -16,7 +19,8 @@ use zeroize::{Zeroize, ZeroizeOnDrop};
 ///     let mut teq_encrypt: TequelEncrypt = TequelEncrypt::new();
 /// }
 /// ```
-#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, Zeroize, ZeroizeOnDrop)]
+#[derive(Debug, Zeroize, ZeroizeOnDrop, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub struct TequelEncrypt {
     pub salt: String,
     pub iterations: u32,
@@ -38,7 +42,8 @@ pub struct TequelEncrypt {
 ///     Ok(())
 /// }
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Zeroize, ZeroizeOnDrop, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub struct TequelEncryption {
     pub encrypted_data: String,
     pub salt: String,

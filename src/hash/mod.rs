@@ -2,6 +2,9 @@ use std::str::from_utf8;
 
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
+#[cfg(feature = "serialization")]
+use serde::{Serialize, Deserialize};
+
 /// TequelHash is a struct that controls Hashing, it has `Constants`, `Salt` and `Custom Iterations`. <br><br>
 /// Your functions are:
 /// - `dif_hash_string`
@@ -10,7 +13,8 @@ use zeroize::{Zeroize, ZeroizeOnDrop};
 /// - `dt_hash_bytes`
 /// - `is_valid_hash_from_string`
 /// - `is_valid_hash_from_bytes`
-#[derive(Debug, Zeroize, ZeroizeOnDrop, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Zeroize, ZeroizeOnDrop, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub struct TequelHash {
     pub states: [u32; 12],
     pub salt: String,
@@ -63,28 +67,62 @@ impl TequelHash {
 
         let byteinput: &[u8] = combined.as_bytes();
 
-        for byte in byteinput.iter() {
-            self.states[0] = self.states[0].wrapping_add(*byte as u32).wrapping_mul(0x9E3779B1);
+        for (idx, byte) in byteinput.iter().enumerate() {
 
-            for i in 0..11 {
-                let prev = self.states[i];
-                let next = (i + 1) % 12;
+            let b = *byte as u32;
 
-                self.states[next] ^= (prev.rotate_left(13) ^ 0x85EBCA6B);
-                self.states[i] = self.states[i].wrapping_mul(0xAD35744D).rotate_left(7)
+            let pos = idx % 12;
+
+            self.states[pos] = self.states[pos].wrapping_add(b ^ 0x9E3779B1);
+            // self.states[5] = self.states[5] ^ b.rotate_left(4);
+            // self.states[11] = self.states[11].wrapping_sub(b.rotate_left(8));
+
+            for _ in 0..4 {
+                for i in 0..12 {
+                    let next = (i + 1) % 12;
+                    let jump = (i + 5) % 12;
+
+                    let dyna_shift = (self.states[i].count_ones() + i as u32) % 32;
+
+                    self.states[i] = self.states[i]
+                        .wrapping_add(self.states[jump])
+                        .rotate_left(dyna_shift);
+
+                    self.states[next] = (self.states[next] ^ self.states[i])
+                        .wrapping_mul(0x85EBCA6B);
+                }
             }
 
-            self.states[0] = (self.states[0] ^ self.states[9]).rotate_left(self.iterations + 13)
+            
         }
+        
+        self.states[0] = self.states[0] ^ self.states[11];
 
-        for i in 0..11 {
-            self.states[i] ^= self.states[(i + 1) % 12].wrapping_mul(0x85EBCA6B);
-            self.states[i] = self.states[i].rotate_left((i + 1) as u32);
-            self.states[(i + 5) % 12] ^= self.states[i];
+        for r in 0..64 {
+            for i in 0..12 {
+
+                let prev = if i == 0 { 11 } else { i - 1 };
+                let next = (i + 1) % 12;
+
+                self.states[i] = self.states[i]
+                    .wrapping_add(self.states[prev])
+                    .rotate_left((r % 31) + 1);
+
+
+                self.states[next] ^= self.states[i].wrapping_mul(0xAD35744D);
+
+            }
         }
-
-
-        self.states.iter().map(|s| format!("{:08x}", s)).collect::<String>()
+        
+        self.states.iter().map(|s| {
+            let mut h = *s;
+            h ^= h >> 16;
+            h = h.wrapping_mul(0x85ebca6b);
+            h ^= h >> 13;
+            h = h.wrapping_mul(0xc2b2ae35);
+            h ^= h >> 16;
+            format!("{:08x}", h)
+        }).collect::<String>()
 
     }
 
@@ -108,27 +146,62 @@ impl TequelHash {
 
         let byteinput: &[u8] = combined.as_bytes();
 
-        for byte in byteinput.iter() {
-            self.states[0] = self.states[0].wrapping_add(*byte as u32).wrapping_mul(0x9E3779B1);
+        for (idx, byte) in byteinput.iter().enumerate() {
 
-            for i in 0..11 {
-                let prev = self.states[i];
-                let next = (i + 1) % 12;
+            let b = *byte as u32;
 
-                self.states[next] ^= (prev.rotate_left(13) ^ 0x85EBCA6B);
-                self.states[i] = self.states[i].wrapping_mul(0xAD35744D).rotate_left(7)
+            let pos = idx % 12;
+
+            self.states[pos] = self.states[pos].wrapping_add(b ^ 0x9E3779B1);
+            // self.states[5] = self.states[5] ^ b.rotate_left(4);
+            // self.states[11] = self.states[11].wrapping_sub(b.rotate_left(8));
+
+            for _ in 0..4 {
+                for i in 0..12 {
+                    let next = (i + 1) % 12;
+                    let jump = (i + 5) % 12;
+
+                    let dyna_shift = (self.states[i].count_ones() + i as u32) % 32;
+
+                    self.states[i] = self.states[i]
+                        .wrapping_add(self.states[jump])
+                        .rotate_left(dyna_shift);
+
+                    self.states[next] = (self.states[next] ^ self.states[i])
+                        .wrapping_mul(0x85EBCA6B);
+                }
             }
 
-            self.states[0] = (self.states[0] ^ self.states[9]).rotate_left(self.iterations + 13)
+            
         }
+        
+        self.states[0] = self.states[0] ^ self.states[11];
 
-        for i in 0..11 {
-            self.states[i] ^= self.states[(i + 1) % 12].wrapping_mul(0x85EBCA6B);
-            self.states[i] = self.states[i].rotate_left((i + 1) as u32);
-            self.states[(i + 5) % 12] ^= self.states[i];
+        for r in 0..64 {
+            for i in 0..12 {
+
+                let prev = if i == 0 { 11 } else { i - 1 };
+                let next = (i + 1) % 12;
+
+                self.states[i] = self.states[i]
+                    .wrapping_add(self.states[prev])
+                    .rotate_left((r % 31) + 1);
+
+
+                self.states[next] ^= self.states[i].wrapping_mul(0xAD35744D);
+
+            }
         }
-
-        self.states.iter().map(|s| format!("{:08x}", s)).collect::<String>()
+        
+        self.states.iter().map(|s| {
+            let mut h = *s;
+            h ^= h >> 16;
+            h = h.wrapping_mul(0x85ebca6b);
+            h ^= h >> 13;
+            h = h.wrapping_mul(0xc2b2ae35);
+            h ^= h >> 16;
+            format!("{:08x}", h)
+        }).collect::<String>()
 
     }
 
@@ -157,27 +230,62 @@ impl TequelHash {
 
         let byteinput: &[u8] = combined.as_bytes();
 
-        for byte in byteinput.iter() {
-            self.states[0] = self.states[0].wrapping_add(*byte as u32).wrapping_mul(0x9E3779B1);
+        for (idx, byte) in byteinput.iter().enumerate() {
 
-            for i in 0..11 {
-                let prev = self.states[i];
-                let next = (i + 1) % 12;
+            let b = *byte as u32;
 
-                self.states[next] ^= (prev.rotate_left(13) ^ 0x85EBCA6B);
-                self.states[i] = self.states[i].wrapping_mul(0xAD35744D).rotate_left(7)
+            let pos = idx % 12;
+
+            self.states[pos] = self.states[pos].wrapping_add(b ^ 0x9E3779B1);
+            // self.states[5] = self.states[5] ^ b.rotate_left(4);
+            // self.states[11] = self.states[11].wrapping_sub(b.rotate_left(8));
+
+            for _ in 0..4 {
+                for i in 0..12 {
+                    let next = (i + 1) % 12;
+                    let jump = (i + 5) % 12;
+
+                    let dyna_shift = (self.states[i].count_ones() + i as u32) % 32;
+
+                    self.states[i] = self.states[i]
+                        .wrapping_add(self.states[jump])
+                        .rotate_left(dyna_shift);
+
+                    self.states[next] = (self.states[next] ^ self.states[i])
+                        .wrapping_mul(0x85EBCA6B);
+                }
             }
 
-            self.states[0] = (self.states[0] ^ self.states[9]).rotate_left(self.iterations + 13)
+            
         }
+        
+        self.states[0] = self.states[0] ^ self.states[11];
 
-        for i in 0..11 {
-            self.states[i] ^= self.states[(i + 1) % 12].wrapping_mul(0x85EBCA6B);
-            self.states[i] = self.states[i].rotate_left((i + 1) as u32);
-            self.states[(i + 5) % 12] ^= self.states[i];
+        for r in 0..64 {
+            for i in 0..12 {
+
+                let prev = if i == 0 { 11 } else { i - 1 };
+                let next = (i + 1) % 12;
+
+                self.states[i] = self.states[i]
+                    .wrapping_add(self.states[prev])
+                    .rotate_left((r % 31) + 1);
+
+
+                self.states[next] ^= self.states[i].wrapping_mul(0xAD35744D);
+
+            }
         }
-
-        self.states.iter().map(|s| format!("{:08x}", s)).collect::<String>()
+        
+        self.states.iter().map(|s| {
+            let mut h = *s;
+            h ^= h >> 16;
+            h = h.wrapping_mul(0x85ebca6b);
+            h ^= h >> 13;
+            h = h.wrapping_mul(0xc2b2ae35);
+            h ^= h >> 16;
+            format!("{:08x}", h)
+        }).collect::<String>()
 
     }
 
@@ -205,27 +313,62 @@ impl TequelHash {
 
         let byteinput: &[u8] = combined.as_bytes();
 
-        for byte in byteinput.iter() {
-            self.states[0] = self.states[0].wrapping_add(*byte as u32).wrapping_mul(0x9E3779B1);
+        for (idx, byte) in byteinput.iter().enumerate() {
 
-            for i in 0..11 {
-                let prev = self.states[i];
-                let next = (i + 1) % 12;
+            let b = *byte as u32;
 
-                self.states[next] ^= (prev.rotate_left(13) ^ 0x85EBCA6B);
-                self.states[i] = self.states[i].wrapping_mul(0xAD35744D).rotate_left(7)
+            let pos = idx % 12;
+
+            self.states[pos] = self.states[pos].wrapping_add(b ^ 0x9E3779B1);
+            // self.states[5] = self.states[5] ^ b.rotate_left(4);
+            // self.states[11] = self.states[11].wrapping_sub(b.rotate_left(8));
+
+            for _ in 0..4 {
+                for i in 0..12 {
+                    let next = (i + 1) % 12;
+                    let jump = (i + 5) % 12;
+
+                    let dyna_shift = (self.states[i].count_ones() + i as u32) % 32;
+
+                    self.states[i] = self.states[i]
+                        .wrapping_add(self.states[jump])
+                        .rotate_left(dyna_shift);
+
+                    self.states[next] = (self.states[next] ^ self.states[i])
+                        .wrapping_mul(0x85EBCA6B);
+                }
             }
 
-            self.states[0] = (self.states[0] ^ self.states[9]).rotate_left(self.iterations + 13)
+            
         }
+        
+        self.states[0] = self.states[0] ^ self.states[11];
 
-        for i in 0..11 {
-            self.states[i] ^= self.states[(i + 1) % 12].wrapping_mul(0x85EBCA6B);
-            self.states[i] = self.states[i].rotate_left((i + 1) as u32);
-            self.states[(i + 5) % 12] ^= self.states[i];
+        for r in 0..64 {
+            for i in 0..12 {
+
+                let prev = if i == 0 { 11 } else { i - 1 };
+                let next = (i + 1) % 12;
+
+                self.states[i] = self.states[i]
+                    .wrapping_add(self.states[prev])
+                    .rotate_left((r % 31) + 1);
+
+
+                self.states[next] ^= self.states[i].wrapping_mul(0xAD35744D);
+
+            }
         }
-
-        self.states.iter().map(|s| format!("{:08x}", s)).collect::<String>()
+        
+        self.states.iter().map(|s| {
+            let mut h = *s;
+            h ^= h >> 16;
+            h = h.wrapping_mul(0x85ebca6b);
+            h ^= h >> 13;
+            h = h.wrapping_mul(0xc2b2ae35);
+            h ^= h >> 16;
+            format!("{:08x}", h)
+        }).collect::<String>()
 
     }
 
@@ -297,6 +440,25 @@ impl TequelHash {
             false
         }
         
+    }
+
+
+
+
+    pub fn derive_key(&mut self, password: &str) -> [u8; 32] {
+        let mut derived = format!("{}{}{}", self.salt, password, self.salt);
+
+        for i in 0..self.iterations {
+            let hash_hex = self.dt_hash_bytes(derived.as_bytes());
+            derived = format!("{}{}{}", i, hash_hex, self.salt);
+        }
+
+        let final_hash = self.dt_hash_bytes(derived.as_bytes());
+        let bytes = hex::decode(&final_hash).expect("Error in key closing");
+
+        let mut key = [0u8; 32];
+        key.copy_from_slice(&bytes[0..32]);
+        key
     }
 
 

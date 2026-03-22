@@ -177,24 +177,24 @@ fn test_tequel_fuzzing_resistance() -> Result<(), Box<dyn std::error::Error>> {
     let as_big = "A".repeat(10000);
 
     let crazy_inputs = vec![
-        "",                     // Vazio
-        " ",                    // Espaço
+        "",                     // Empty
+        " ",                    // Space
         "\0\0\0",               // Null bytes
         "💀🚀🔥",               // Emojis (Multi-byte UTF-8)
-        &as_big,      // String gigante
+        &as_big,      // large string
         "你好",                 // Mandarim
     ];
 
 
     for input in &crazy_inputs {
 
-        let legit_encrypted = teq.encrypt(input.as_bytes(), "").map_err(|e| {
+        let legit_encrypted = teq.encrypt(input.as_bytes(), "key123").map_err(|e| {
             e
         })?;
 
         let mut corrupted = legit_encrypted.clone();
-        corrupted.mac = "ffffffffffffffffffffffffffffffff".to_string(); // MAC falso
-        corrupted.salt = "00000000".to_string(); // Salt resetado
+        corrupted.mac = "ffffffffffffffffffffffffffffffff".to_string(); // false MAC
+        corrupted.salt = "00000000".to_string(); // false SALT
         
         let trash_data = teq.decrypt(&corrupted, "key123");
 
