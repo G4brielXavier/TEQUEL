@@ -2,7 +2,7 @@ use std::str::from_utf8;
 
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
-#[cfg(feature = "serialization")]
+#[cfg(feature = "serde")]
 use serde::{Serialize, Deserialize};
 
 /// TequelHash is a struct that controls Hashing, it has `Constants`, `Salt` and `Custom Iterations`. <br><br>
@@ -14,7 +14,7 @@ use serde::{Serialize, Deserialize};
 /// - `is_valid_hash_from_string`
 /// - `is_valid_hash_from_bytes`
 #[derive(Debug, Zeroize, ZeroizeOnDrop, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TequelHash {
     pub states: [u32; 12],
     pub salt: String,

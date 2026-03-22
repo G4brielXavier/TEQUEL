@@ -4,7 +4,7 @@ use crate::hash::TequelHash;
 use crate::error::TequelError;
 use crate::rng::TequelRng;
 
-#[cfg(feature = "serialization")]
+#[cfg(feature = "serde")]
 use serde::{Serialize, Deserialize};
 
 use zeroize::{Zeroize, ZeroizeOnDrop};
@@ -20,7 +20,7 @@ use zeroize::{Zeroize, ZeroizeOnDrop};
 /// }
 /// ```
 #[derive(Debug, Zeroize, ZeroizeOnDrop, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TequelEncrypt {
     pub salt: String,
     pub iterations: u32,
@@ -43,7 +43,7 @@ pub struct TequelEncrypt {
 /// }
 /// ```
 #[derive(Debug, Zeroize, ZeroizeOnDrop, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TequelEncryption {
     pub encrypted_data: String,
     pub salt: String,
