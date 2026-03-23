@@ -365,7 +365,6 @@ impl TequelEncrypt {
         }
 
         let res = String::from_utf8(res_bytes).map_err(|_| TequelError::InvalidUtf8)?;
-        println!("{}", res);
 
         Ok(res)
 
