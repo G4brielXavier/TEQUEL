@@ -1,4 +1,6 @@
-use std::str::from_utf8;
+
+#[cfg(target_arch = "x86_64")]
+use std::arch::x86_64::*;
 
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
@@ -47,169 +49,6 @@ impl TequelHash {
         self
     }
 
-
-    // from &str 
-    /// <br>
-    /// 
-    /// ```
-    /// 
-    /// use tequel_rs::hash::TequelHash;
-    /// 
-    /// let mut tequelHash: TequelHash = TequelHash::new();
-    /// 
-    /// let hash: String = tequelHash.dif_hash_string("my_secret"); // -> s2ohs192...
-    /// let hash1: String = tequelHash.dif_hash_string("my_secret"); // -> 29js19ss...
-    /// ```
-    /// Generates a different HASH even `&str` being same.
-    pub fn dif_hash_string(&mut self, input: &str) -> String {
-
-        let combined = format!("{}{}", self.salt, input);
-
-        let byteinput: &[u8] = combined.as_bytes();
-
-        for (idx, byte) in byteinput.iter().enumerate() {
-
-            let b = *byte as u32;
-
-            let pos = idx % 12;
-
-            self.states[pos] = self.states[pos].wrapping_add(b ^ 0x9E3779B1);
-            // self.states[5] = self.states[5] ^ b.rotate_left(4);
-            // self.states[11] = self.states[11].wrapping_sub(b.rotate_left(8));
-
-            for _ in 0..4 {
-                for i in 0..12 {
-                    let next = (i + 1) % 12;
-                    let jump = (i + 5) % 12;
-
-                    let dyna_shift = (self.states[i].count_ones() + i as u32) % 32;
-
-                    self.states[i] = self.states[i]
-                        .wrapping_add(self.states[jump])
-                        .rotate_left(dyna_shift);
-
-                    self.states[next] = (self.states[next] ^ self.states[i])
-                        .wrapping_mul(0x85EBCA6B);
-                }
-            }
-
-            
-        }
-        
-        self.states[0] = self.states[0] ^ self.states[11];
-
-        for r in 0..64 {
-            for i in 0..12 {
-
-                let prev = if i == 0 { 11 } else { i - 1 };
-                let next = (i + 1) % 12;
-
-                self.states[i] = self.states[i]
-                    .wrapping_add(self.states[prev])
-                    .rotate_left((r % 31) + 1);
-
-
-                self.states[next] ^= self.states[i].wrapping_mul(0xAD35744D);
-
-            }
-        }
-        
-        self.states.iter().map(|s| {
-            let mut h = *s;
-            h ^= h >> 16;
-            h = h.wrapping_mul(0x85ebca6b);
-            h ^= h >> 13;
-            h = h.wrapping_mul(0xc2b2ae35);
-            h ^= h >> 16;
-            format!("{:08x}", h)
-        }).collect::<String>()
-
-    }
-
-    /// <br>
-    /// 
-    /// ```rust
-    /// 
-    /// use tequel_rs::hash::TequelHash;
-    /// 
-    /// let mut tequelHash: TequelHash = TequelHash::new();
-    /// 
-    /// let hash: String = tequelHash.dt_hash_string("my_secret"); // -> 9as12sk21...
-    /// let hash1: String = tequelHash.dt_hash_string("my_secret"); // -> 9as12sk21...
-    /// ```
-    /// Generates a unique HASH from the same `&str`.
-    pub fn dt_hash_string(&mut self, input: &str) -> String {
-
-        self.states = Self::new().states;
-
-        let combined = format!("{}{}", self.salt, input);
-
-        let byteinput: &[u8] = combined.as_bytes();
-
-        for (idx, byte) in byteinput.iter().enumerate() {
-
-            let b = *byte as u32;
-
-            let pos = idx % 12;
-
-            self.states[pos] = self.states[pos].wrapping_add(b ^ 0x9E3779B1);
-            // self.states[5] = self.states[5] ^ b.rotate_left(4);
-            // self.states[11] = self.states[11].wrapping_sub(b.rotate_left(8));
-
-            for _ in 0..4 {
-                for i in 0..12 {
-                    let next = (i + 1) % 12;
-                    let jump = (i + 5) % 12;
-
-                    let dyna_shift = (self.states[i].count_ones() + i as u32) % 32;
-
-                    self.states[i] = self.states[i]
-                        .wrapping_add(self.states[jump])
-                        .rotate_left(dyna_shift);
-
-                    self.states[next] = (self.states[next] ^ self.states[i])
-                        .wrapping_mul(0x85EBCA6B);
-                }
-            }
-
-            
-        }
-        
-        self.states[0] = self.states[0] ^ self.states[11];
-
-        for r in 0..64 {
-            for i in 0..12 {
-
-                let prev = if i == 0 { 11 } else { i - 1 };
-                let next = (i + 1) % 12;
-
-                self.states[i] = self.states[i]
-                    .wrapping_add(self.states[prev])
-                    .rotate_left((r % 31) + 1);
-
-
-                self.states[next] ^= self.states[i].wrapping_mul(0xAD35744D);
-
-            }
-        }
-        
-        self.states.iter().map(|s| {
-            let mut h = *s;
-            h ^= h >> 16;
-            h = h.wrapping_mul(0x85ebca6b);
-            h ^= h >> 13;
-            h = h.wrapping_mul(0xc2b2ae35);
-            h ^= h >> 16;
-            format!("{:08x}", h)
-        }).collect::<String>()
-
-    }
-
-
-
-
-    // from &[u8]
-
     /// <br>
     /// 
     /// ```rust
@@ -220,63 +59,97 @@ impl TequelHash {
     /// 
     /// let mybytes: &[u8] = b"secret";
     /// 
-    /// let hash: String = tequelHash.dif_hash_bytes(&mybytes); // -> 9as12sk21...
-    /// let hash1: String = tequelHash.dif_hash_bytes(&mybytes); // -> 29js19ss...
+    /// let hash: String = tequelHash.tqlhash(&mybytes); // -> 9as12sk21...
+    /// let hash1: String = tequelHash.tqlhash(&mybytes); // -> 9as12sk21...
     /// ```
-    /// Generates a different HASH even `&[u8]` being same
-    pub fn dif_hash_bytes(&mut self, input: &[u8]) -> String {
+    /// Generates a unique HASH with input (`&[u8]`), this uses SIMD/AVX2 to generate.
+    pub fn tqlhash(&mut self, input: &[u8]) -> String {
 
-        let combined = format!("{}{}", self.salt, from_utf8(input).unwrap());
+        self.states = [0u32; 12];
+        let mut states_simd = unsafe { [_mm256_setzero_si256(); 12] };
 
-        let byteinput: &[u8] = combined.as_bytes();
+        let mut chunks = input.chunks_exact(32);
 
-        for (idx, byte) in byteinput.iter().enumerate() {
+        for chunk in chunks.by_ref() {
+            unsafe {
+                let data_vec = _mm256_loadu_si256(chunk.as_ptr() as *const __m256i);
 
-            let b = *byte as u32;
+                states_simd[0] = _mm256_add_epi32(states_simd[0], data_vec);
+                states_simd[0] = _mm256_or_si256(_mm256_slli_epi32(states_simd[0], 7), _mm256_srli_epi32(states_simd[0], 25));
+                states_simd[1] = _mm256_xor_si256(states_simd[1], states_simd[0]);
 
+                // S1 -> R13: Quebrando a simetria
+                states_simd[1] = _mm256_add_epi32(states_simd[1], data_vec);
+                states_simd[1] = _mm256_or_si256(_mm256_slli_epi32(states_simd[1], 13), _mm256_srli_epi32(states_simd[1], 19));
+                states_simd[2] = _mm256_xor_si256(states_simd[2], states_simd[1]);
+
+                // S2 -> R19: Expansão de bits
+                states_simd[2] = _mm256_add_epi32(states_simd[2], data_vec);
+                states_simd[2] = _mm256_or_si256(_mm256_slli_epi32(states_simd[2], 19), _mm256_srli_epi32(states_simd[2], 13));
+                states_simd[3] = _mm256_xor_si256(states_simd[3], states_simd[2]);
+
+                // S3 -> R23: Rotação pesada
+                states_simd[3] = _mm256_add_epi32(states_simd[3], data_vec);
+                states_simd[3] = _mm256_or_si256(_mm256_slli_epi32(states_simd[3], 23), _mm256_srli_epi32(states_simd[3], 9));
+                states_simd[4] = _mm256_xor_si256(states_simd[4], states_simd[3]);
+
+                // S4 -> R29: Quase um giro completo
+                states_simd[4] = _mm256_add_epi32(states_simd[4], data_vec);
+                states_simd[4] = _mm256_or_si256(_mm256_slli_epi32(states_simd[4], 29), _mm256_srli_epi32(states_simd[4], 3));
+                states_simd[5] = _mm256_xor_si256(states_simd[5], states_simd[4]);
+
+                // S5 -> R5: O toque sutil
+                states_simd[5] = _mm256_add_epi32(states_simd[5], data_vec);
+                states_simd[5] = _mm256_or_si256(_mm256_slli_epi32(states_simd[5], 5), _mm256_srli_epi32(states_simd[5], 27));
+                states_simd[6] = _mm256_xor_si256(states_simd[6], states_simd[5]);
+
+                // S6 -> R11: Difusão primária
+                states_simd[6] = _mm256_add_epi32(states_simd[6], data_vec);
+                states_simd[6] = _mm256_or_si256(_mm256_slli_epi32(states_simd[6], 11), _mm256_srli_epi32(states_simd[6], 21));
+                states_simd[7] = _mm256_xor_si256(states_simd[7], states_simd[6]);
+
+                // S7 -> R17: Centro da entropia
+                states_simd[7] = _mm256_add_epi32(states_simd[7], data_vec);
+                states_simd[7] = _mm256_or_si256(_mm256_slli_epi32(states_simd[7], 17), _mm256_srli_epi32(states_simd[7], 15));
+                states_simd[8] = _mm256_xor_si256(states_simd[8], states_simd[7]);
+
+                // S8 -> R25: Inversão do S0
+                states_simd[8] = _mm256_add_epi32(states_simd[8], data_vec);
+                states_simd[8] = _mm256_or_si256(_mm256_slli_epi32(states_simd[8], 25), _mm256_srli_epi32(states_simd[8], 7));
+                states_simd[9] = _mm256_xor_si256(states_simd[9], states_simd[8]);
+
+                // S9 -> R3: Curto e rápido
+                states_simd[9] = _mm256_add_epi32(states_simd[9], data_vec);
+                states_simd[9] = _mm256_or_si256(_mm256_slli_epi32(states_simd[9], 3), _mm256_srli_epi32(states_simd[9], 29));
+                states_simd[10] = _mm256_xor_si256(states_simd[10], states_simd[9]);
+
+                // S10 -> R31: O limite do bit
+                states_simd[10] = _mm256_add_epi32(states_simd[10], data_vec);
+                states_simd[10] = _mm256_or_si256(_mm256_slli_epi32(states_simd[10], 31), _mm256_srli_epi32(states_simd[10], 28));
+                states_simd[11] = _mm256_xor_si256(states_simd[11], states_simd[10]);
+
+                // S11 -> R2: Finalizador da corrente
+                states_simd[11] = _mm256_add_epi32(states_simd[11], data_vec);
+                states_simd[11] = _mm256_or_si256(_mm256_slli_epi32(states_simd[11], 2), _mm256_srli_epi32(states_simd[11], 30));
+                states_simd[0] = _mm256_xor_si256(states_simd[0], states_simd[11]);
+
+            }
+        }
+
+        let remainder = chunks.remainder();
+        for (idx, &byte) in remainder.iter().enumerate() {
             let pos = idx % 12;
-
-            self.states[pos] = self.states[pos].wrapping_add(b ^ 0x9E3779B1);
-            // self.states[5] = self.states[5] ^ b.rotate_left(4);
-            // self.states[11] = self.states[11].wrapping_sub(b.rotate_left(8));
-
-            for _ in 0..4 {
-                for i in 0..12 {
-                    let next = (i + 1) % 12;
-                    let jump = (i + 5) % 12;
-
-                    let dyna_shift = (self.states[i].count_ones() + i as u32) % 32;
-
-                    self.states[i] = self.states[i]
-                        .wrapping_add(self.states[jump])
-                        .rotate_left(dyna_shift);
-
-                    self.states[next] = (self.states[next] ^ self.states[i])
-                        .wrapping_mul(0x85EBCA6B);
-                }
-            }
-
-            
+            self.states[pos] = self.states[pos].wrapping_add((byte as u32) ^ 0x9E3779B1);
         }
-        
-        self.states[0] = self.states[0] ^ self.states[11];
 
-        for r in 0..64 {
-            for i in 0..12 {
-
-                let prev = if i == 0 { 11 } else { i - 1 };
-                let next = (i + 1) % 12;
-
-                self.states[i] = self.states[i]
-                    .wrapping_add(self.states[prev])
-                    .rotate_left((r % 31) + 1);
-
-
-                self.states[next] ^= self.states[i].wrapping_mul(0xAD35744D);
-
+        for i in 0..12 {
+            unsafe {
+                self.states[i] = self.states[i].wrapping_add(self.horiz_add_avx2(states_simd[i]));
             }
         }
-        
+
+        self.apply_final_mixer_64();
+
         self.states.iter().map(|s| {
             let mut h = *s;
             h ^= h >> 16;
@@ -291,85 +164,25 @@ impl TequelHash {
 
 
 
-    /// <br>
-    /// 
-    /// ```rust
-    /// 
-    /// use tequel_rs::hash::TequelHash;
-    /// 
-    /// let mut tequelHash: TequelHash = TequelHash::new();
-    /// 
-    /// let mybytes: &[u8] = b"secret";
-    /// 
-    /// let hash: String = tequelHash.dt_hash_bytes(&mybytes); // -> 9as12sk21...
-    /// let hash1: String = tequelHash.dt_hash_bytes(&mybytes); // -> 9as12sk21...
-    /// ```
-    /// Generates a unique HASH for the same `&[u8]`.
-    pub fn dt_hash_bytes(&mut self, input: &[u8]) -> String {
+    #[inline]
+    unsafe fn horiz_add_avx2(&self, v: __m256i) -> u32 {
+        let mut arr = [0u32; 8];
+        unsafe { _mm256_storeu_si256(arr.as_mut_ptr() as *mut __m256i, v); }
+        arr.iter().fold(0, |acc, &x| acc.wrapping_add(x))
+    }
 
-        self.states = Self::new().states;
-
-        let combined = format!("{}{}", self.salt, from_utf8(input).unwrap());
-
-        let byteinput: &[u8] = combined.as_bytes();
-
-        for (idx, byte) in byteinput.iter().enumerate() {
-
-            let b = *byte as u32;
-
-            let pos = idx % 12;
-
-            self.states[pos] = self.states[pos].wrapping_add(b ^ 0x9E3779B1);
-            // self.states[5] = self.states[5] ^ b.rotate_left(4);
-            // self.states[11] = self.states[11].wrapping_sub(b.rotate_left(8));
-
-            for _ in 0..4 {
-                for i in 0..12 {
-                    let next = (i + 1) % 12;
-                    let jump = (i + 5) % 12;
-
-                    let dyna_shift = (self.states[i].count_ones() + i as u32) % 32;
-
-                    self.states[i] = self.states[i]
-                        .wrapping_add(self.states[jump])
-                        .rotate_left(dyna_shift);
-
-                    self.states[next] = (self.states[next] ^ self.states[i])
-                        .wrapping_mul(0x85EBCA6B);
-                }
-            }
-
-            
-        }
-        
-        self.states[0] = self.states[0] ^ self.states[11];
-
+    fn apply_final_mixer_64(&mut self) {
         for r in 0..64 {
             for i in 0..12 {
-
                 let prev = if i == 0 { 11 } else { i - 1 };
                 let next = (i + 1) % 12;
 
                 self.states[i] = self.states[i]
                     .wrapping_add(self.states[prev])
-                    .rotate_left((r % 31) + 1);
-
-
+                    .rotate_left(((r % 31) as u32) + 1);
                 self.states[next] ^= self.states[i].wrapping_mul(0xAD35744D);
-
             }
         }
-        
-        self.states.iter().map(|s| {
-            let mut h = *s;
-            h ^= h >> 16;
-            h = h.wrapping_mul(0x85ebca6b);
-            h ^= h >> 13;
-            h = h.wrapping_mul(0xc2b2ae35);
-            h ^= h >> 16;
-            format!("{:08x}", h)
-        }).collect::<String>()
-
     }
 
 
@@ -383,9 +196,9 @@ impl TequelHash {
     /// 
     /// let mybytes: &[u8] = b"secret";
     /// 
-    /// let hash: String = tequelHash.dt_hash_bytes(&mybytes); // -> 9as12sk21...
+    /// let hash: String = tequelHash.tqlhash(&mybytes); // -> 9as12sk21...
     /// 
-    /// if tequelHash.is_valid_hash_from_bytes(&hash, &mybytes) {
+    /// if tequelHash.isv_tqlhash(&hash, &mybytes) {
     ///     println!("VALID!")
     /// } else {
     ///     println!("NO VALID!")
@@ -393,13 +206,13 @@ impl TequelHash {
     /// 
     /// ```
     /// Generates a unique HASH for the same `&[u8]`.
-    pub fn is_valid_hash_from_bytes(&mut self, hash: &String, value: &[u8]) -> bool {
+    pub fn isv_tqlhash(&mut self, hash: &String, value: &[u8]) -> bool {
         
         let mut prop_tequel = TequelHash::new()
             .with_salt(&self.salt)
             .with_iteration(self.iterations);
 
-        if *hash == prop_tequel.dt_hash_bytes(&value) {
+        if *hash == prop_tequel.tqlhash(&value) {
             true
         } else {
             false
@@ -408,52 +221,20 @@ impl TequelHash {
     }
 
 
-    /// <br>
-    /// 
-    /// ```rust
-    /// 
-    /// use tequel_rs::hash::TequelHash;
-    /// 
-    /// let mut tequelHash: TequelHash = TequelHash::new();
-    /// 
-    /// let my_data: &str = "secret";
-    /// 
-    /// let hash: String = tequelHash.dt_hash_string(my_data); // -> 9as12sk21...
-    /// 
-    /// if tequelHash.is_valid_hash_from_string(&hash, &my_data) {
-    ///     println!("VALID!")
-    /// } else {
-    ///     println!("NO VALID!")
-    /// }
-    /// 
-    /// ```
-    /// Generates a unique HASH for the same `&[u8]`.
-    pub fn is_valid_hash_from_string(&mut self, hash: &String, value: &str) -> bool {
-        
-        let mut prop_tequel = TequelHash::new()
-            .with_salt(&self.salt)
-            .with_iteration(self.iterations);
-
-        if *hash == prop_tequel.dt_hash_string(&value) {
-            true
-        } else {
-            false
-        }
-        
-    }
 
 
+    pub fn derive_key(&mut self, password: &str, iterations: u32) -> [u8; 32] {
 
+        self.iterations = if iterations > 0 { iterations } else { 30 };
 
-    pub fn derive_key(&mut self, password: &str) -> [u8; 32] {
         let mut derived = format!("{}{}{}", self.salt, password, self.salt);
 
         for i in 0..self.iterations {
-            let hash_hex = self.dt_hash_bytes(derived.as_bytes());
+            let hash_hex = self.tqlhash(derived.as_bytes());
             derived = format!("{}{}{}", i, hash_hex, self.salt);
         }
 
-        let final_hash = self.dt_hash_bytes(derived.as_bytes());
+        let final_hash = self.tqlhash(derived.as_bytes());
         let bytes = hex::decode(&final_hash).expect("Error in key closing");
 
         let mut key = [0u8; 32];

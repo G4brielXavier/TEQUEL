@@ -147,7 +147,7 @@ impl TequelEncrypt {
         mixmac.push_str(&e.iter().map(|s| format!("{:02x}", s)).collect::<String>());
 
         let mut cus_teq_hash = TequelHash::new();
-        let comb_mixmac = cus_teq_hash.dt_hash_string(&mixmac);
+        let comb_mixmac = cus_teq_hash.tqlhash(&mixmac.as_bytes());
 
 
         Ok(TequelEncryption { encrypted_data: res, salt: salt_res, mac: comb_mixmac })
@@ -206,7 +206,7 @@ impl TequelEncrypt {
         mixmac.push_str(&e.iter().map(|s| format!("{:02x}", s)).collect::<String>());
 
         let mut cus_teq_hash = TequelHash::new();
-        let comb_mixmac = cus_teq_hash.dt_hash_string(&mixmac).to_lowercase();
+        let comb_mixmac = cus_teq_hash.tqlhash(&mixmac.as_bytes()).to_lowercase();
 
         if !self.compare_macs(tequel_encryption.mac.to_lowercase().as_bytes(), comb_mixmac.as_bytes()) {
             return Err(TequelError::InvalidMac)

@@ -7,18 +7,17 @@ mod kdf_tests {
     #[test]
     fn test_myway_key_derivation() {
         let mut tequel = TequelHash::new()
-            .with_iteration(1000)
             .with_salt("project_name");
 
         let password = "senha_super_secreta_do_gabriel";
         let project_name = "meu_projeto_hova"; // Usado como SALT
         
         // 1. Gera a chave original (1000 iterações para segurança)
-        let key1 = tequel.derive_key(password);
+        let key1 = tequel.derive_key(password, 1000);
         
         // 2. Gera a chave com uma pequena mudança (troca o 'a' por 'b' no final)
         let password_alt = "senha_super_secreta_do_gabrielb";
-        let key2 = tequel.derive_key(password_alt);
+        let key2 = tequel.derive_key(password_alt, 1000);
 
         // O teste da verdade: As chaves DEVEM ser totalmente diferentes
         assert_ne!(key1, key2, "As chaves não podem ser iguais!");

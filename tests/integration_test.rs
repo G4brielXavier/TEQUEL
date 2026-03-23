@@ -3,69 +3,18 @@ use tequel_rs::encrypt::TequelEncrypt;
 use tequel_rs::error::TequelError;
 use tequel_rs::rng::TequelRng;
 
-#[test]
-fn test_dif_hash_is_different_from_string() {
 
-    let mut teqhash = TequelHash::new();
-
-    let hash1 = teqhash.dif_hash_string("dog");
-    let hash2 = teqhash.dif_hash_string("dog");
-
-
-    assert_ne!(hash1, hash2);
-
-}
-
-#[test]
-fn test_dif_hash_is_different_from_bytes() {
-
-    let mut teqhash = TequelHash::new();
-
-    let hash1 = teqhash.dif_hash_bytes(b"dog");
-    let hash2 = teqhash.dif_hash_bytes(b"dog");
-
-
-    assert_ne!(hash1, hash2);
-
-}
-
-#[test]
-fn test_dif_hash_is_equal_from_string() {
-
-    let mut teqhash = TequelHash::new();
-
-    let hash1 = teqhash.dt_hash_string("dog");
-    let hash2 = teqhash.dt_hash_string("dog");
-
-
-    assert_eq!(hash1, hash2);
-
-}
 
 #[test]
 fn test_dif_hash_is_equal_from_bytes() {
 
     let mut teqhash = TequelHash::new();
 
-    let hash1 = teqhash.dt_hash_bytes(b"dog");
-    let hash2 = teqhash.dt_hash_bytes(b"dog");
+    let hash1 = teqhash.tqlhash(b"dog");
+    let hash2 = teqhash.tqlhash(b"dog");
 
 
     assert_eq!(hash1, hash2);
-
-}
-
-#[test]
-fn test_if_hash_from_string_with_salt_is_valid() {
-
-    let mut teq_hash = TequelHash::new()
-        .with_salt("test")
-        .with_iteration(50);
-
-    let my_secret = "secret";
-    let hash = teq_hash.dt_hash_string(&my_secret);
-
-    assert!(teq_hash.is_valid_hash_from_string(&hash, &my_secret));// OK!
 
 }
 
@@ -77,9 +26,9 @@ fn test_if_hash_from_bytes_with_salt_is_valid() {
         .with_iteration(50);
 
     let my_secret = b"secret";
-    let hash = teq_hash.dt_hash_bytes(my_secret);
+    let hash = teq_hash.tqlhash(my_secret);
 
-    assert!(teq_hash.is_valid_hash_from_bytes(&hash, my_secret));// OK!
+    assert!(teq_hash.isv_tqlhash(&hash, my_secret));// OK!
 
 }
 

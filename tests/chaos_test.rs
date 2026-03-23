@@ -20,8 +20,8 @@ mod tests {
         let mut input2 = "A".repeat(1000);
         input2.replace_range(999..1000, "B");
 
-        let h1_hex = TequelHash::new().dt_hash_bytes(input1.as_bytes());
-        let h2_hex = TequelHash::new().dt_hash_bytes(input2.as_bytes());
+        let h1_hex = TequelHash::new().tqlhash(input1.as_bytes());
+        let h2_hex = TequelHash::new().tqlhash(input2.as_bytes());
 
         // CONVERSÃO CRÍTICA: Transforma Hex String em Vec<u8> real
         let h1_bytes = hex::decode(&h1_hex).expect("Hex inválido 1");
@@ -39,7 +39,7 @@ mod tests {
         let null_input = vec![0u8; 1024];
         let salt = "0".repeat(16);
         
-        let hash = TequelHash::new().with_salt(&salt).dt_hash_bytes(&null_input);
+        let hash = TequelHash::new().with_salt(&salt).tqlhash(&null_input);
         
         // Verifica se o hash não é uma sequência repetida ou cheia de zeros
         let zero_count = hash.as_bytes().iter().filter(|&&b| b == 0).count();
