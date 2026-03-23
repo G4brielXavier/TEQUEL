@@ -149,7 +149,9 @@ impl TequelEncrypt {
                 // let vd = _mm256_set1_epi32(u32::from_be_bytes(d) as i32);
                 // let ve = _mm256_set1_epi32(u32::from_be_bytes(e) as i32);
 
-                for chunk in chunks {
+                for (chunk_idx, chunk) in chunks.enumerate() {
+
+                    let byte_offset = chunk_idx * 32;
                     let mut v_data = _mm256_loadu_si256(chunk.as_ptr() as *const __m256i);
 
                     v_data = _mm256_add_epi8(v_data, _mm256_set1_epi8(a[0] as i8));
@@ -158,7 +160,12 @@ impl TequelEncrypt {
                     v_data = _mm256_xor_si256(v_data, _mm256_set1_epi8(d[0] as i8));
                     v_data = _mm256_add_epi8(v_data, _mm256_set1_epi8(e[0] as i8));
                     
-                    v_data = _mm256_xor_si256(v_data, _mm256_loadu_si256([key_crypt[0]; 32].as_ptr() as *const __m256i));
+
+                    let mut expanded_key = [0u8; 32];
+                    for i in 0..32 {
+                        expanded_key[i] = key_crypt[(byte_offset + i) % key_crypt.len()];
+                    }
+                    v_data = _mm256_xor_si256(v_data, _mm256_loadu_si256(expanded_key.as_ptr() as *const __m256i));
 
                     let mut out = [0u8; 32];
                     _mm256_storeu_si256(out.as_mut_ptr() as *mut __m256i, v_data);
@@ -307,7 +314,7 @@ impl TequelEncrypt {
         })?;
 
         let mut res_bytes = Vec::with_capacity(encrypted_data.len());
-        let key_encrypt_input = key.as_bytes(); // key_a
+        let key_encrypt_input = key.as_bytes(); 
 
         unsafe {
 
@@ -325,6 +332,7 @@ impl TequelEncrypt {
                     for i in 0..32 {
                         expanded_key[i] = key_encrypt_input[(byte_offset + i) % key_encrypt_input.len()];
                     }
+
                     v_data = _mm256_xor_si256(v_data, _mm256_loadu_si256(expanded_key.as_ptr() as *const __m256i));
 
                     v_data = _mm256_sub_epi8(v_data, _mm256_set1_epi8(e[0] as i8));
