@@ -6,7 +6,7 @@
 
 *A high-performance, Dual-Wide SIMD cryptographic engine and hash function, built in pure Rust for modern x86_64 architectures.*
 
-**Tequel 0.8.0: The Dual-Wide & Entropy Update.** Featuring a redesigned AVX2 core, the TQL-11 engine now processes 64-byte chunks per iteration, delivering a near-perfect **49.22% Avalanche Effect** and scaling to **~970 MiB/s** in parallel environments.
+**Tequel 0.8.0: The Dual-Wide & Entropy Update.** Featuring a redesigned AVX2 core, the TQL-11 engine now processes 64-byte chunks per iteration, delivering a near-perfect **50.14% Avalanche Effect** and scaling to **~970 MiB/s** in parallel environments.
 
 *By Gabriel "dotxav" Xavier (@G4brielXavier)*
 
@@ -42,14 +42,14 @@ Verified using `criterion.rs` on `target-cpu=native`.
 | :--- | :--- | :--- | :--- | :--- |
 | **Single-Core Throughput** | Scalar/SIMD | 10.38 MiB/s | **11.10 MiB/s** | **+7.2%** |
 | **Multi-Core Throughput** | Rayon Parallel | ~120 MiB/s | **~970 MiB/s** | **+708%** |
-| **Avalanche (SAC)** | Bit-diff | 51.04% | **49.22%** | **Optimal** |
+| **Avalanche (SAC)** | Bit-diff | 51.04% | **50.14%** | **Optimal** |
 | **Serialization** | Hex Output | `format!` macro | **Zero-Alloc Table** | **O(1) Latency** |
 
 ## 🛡️ Statistical Rigor
 
 ### **1. Strict Avalanche Criterion (SAC)**
 The TQL-11 primitive ensures that any single-bit change in the input cascades into a complete transformation of the state.
-- **Result:** **49.22%** (Ideal statistical randomness).
+- **Result:** **50.14%** (Ideal statistical randomness).
 - **Interleaving:** Uses a constant bit-twist (`0x517CC1B7`) to ensure unique entropy paths for parallel data blocks.
 
 ### **2. Shannon Entropy**
@@ -68,7 +68,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-tequel-rs = "0.8.0"
+tequel-rs = "0.8.2"
 ```
 
 ## Usage
