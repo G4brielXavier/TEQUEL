@@ -1,11 +1,21 @@
-
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
+use crate::avx2_inline::{ add, xor, or, storeu, loadu, setzero, rota_lf, rota_rg };
+
+
+macro_rules! teq {
+    ($i_f:expr, $lv:expr, $lr:expr, $st_simd_a:ident, $ymm1:ident) => {
+        $st_simd_a[$i_f] = add($st_simd_a[$i_f], $ymm1);
+        $st_simd_a[$i_f] = or(rota_lf::<$lv>($st_simd_a[$i_f]), rota_rg::<$lr>($st_simd_a[$i_f]));
+        $st_simd_a[$i_f+1] = xor($st_simd_a[$i_f+1], $st_simd_a[$i_f]);
+    };
+}
 
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
 #[cfg(feature = "serde")]
 use serde::{Serialize, Deserialize};
+
 
 /// ```TequelHash``` provides hash functions, custom iterations and salt. <br><br>
 #[derive(Debug, Zeroize, ZeroizeOnDrop, Clone, PartialEq, Eq)]
@@ -83,108 +93,81 @@ impl TequelHash {
             0xCC2912FA, 0xEE0952EA, 0x1120212A, 0x2224312F,
         ];
 
-        let mut states_simd = unsafe { [_mm256_setzero_si256(); 12] };
+        const HEX_CHARS: &[u8; 16] = b"0123456789abcdef";
 
-        let mut chunks = input.chunks_exact(32);
+        let mut st_simd_a = unsafe { [setzero(); 12] };
+
+        let mut chunks = input.chunks_exact(64);
+
+        let mut i_f = 0;
 
         for chunk in chunks.by_ref() {
+
             unsafe {
-                let data_vec = _mm256_loadu_si256(chunk.as_ptr() as *const __m256i);
+                let ymm1 = loadu(chunk.as_ptr() as *const __m256i);
+                let ymm2 = loadu(chunk.as_ptr().add(32) as *const __m256i);
 
-                states_simd[0] = _mm256_add_epi32(states_simd[0], data_vec);
-                states_simd[0] = _mm256_or_si256(_mm256_slli_epi32(states_simd[0], 7), _mm256_srli_epi32(states_simd[0], 25));
-                states_simd[1] = _mm256_xor_si256(states_simd[1], states_simd[0]);
+                i_f = i_f & 11;
+                let ymm2_shift = xor(ymm2, _mm256_set1_epi32(0x517CC1B7));
 
-                // S1 -> R13: Quebrando a simetria
-                states_simd[1] = _mm256_add_epi32(states_simd[1], data_vec);
-                states_simd[1] = _mm256_or_si256(_mm256_slli_epi32(states_simd[1], 13), _mm256_srli_epi32(states_simd[1], 19));
-                states_simd[2] = _mm256_xor_si256(states_simd[2], states_simd[1]);
+                teq!(i_f, 7, 25, st_simd_a, ymm1);
+                teq!((i_f + 1) % 12, 31, 28, st_simd_a, ymm2_shift);
 
-                // S2 -> R19: Expansão de bits
-                states_simd[2] = _mm256_add_epi32(states_simd[2], data_vec);
-                states_simd[2] = _mm256_or_si256(_mm256_slli_epi32(states_simd[2], 19), _mm256_srli_epi32(states_simd[2], 13));
-                states_simd[3] = _mm256_xor_si256(states_simd[3], states_simd[2]);
+                teq!(i_f, 25, 7, st_simd_a, ymm1);
+                teq!((i_f + 1) % 12, 23, 9, st_simd_a, ymm2_shift);
+                
+                teq!(i_f, 13, 19, st_simd_a, ymm1);
+                teq!((i_f + 1) % 12, 29, 3, st_simd_a, ymm2_shift);
+                
+                teq!(i_f, 19, 13, st_simd_a, ymm1);
+                teq!((i_f + 1) % 12, 17, 15, st_simd_a, ymm2_shift);
+                
+                teq!(i_f, 11, 21, st_simd_a, ymm1);
+                teq!((i_f + 1) % 12, 5, 27, st_simd_a, ymm2_shift);
+                
+                teq!(i_f, 3, 29, st_simd_a, ymm1);
+                teq!((i_f + 1) % 12, 2, 30, st_simd_a, ymm2_shift);
 
-                // S3 -> R23: Rotação pesada
-                states_simd[3] = _mm256_add_epi32(states_simd[3], data_vec);
-                states_simd[3] = _mm256_or_si256(_mm256_slli_epi32(states_simd[3], 23), _mm256_srli_epi32(states_simd[3], 9));
-                states_simd[4] = _mm256_xor_si256(states_simd[4], states_simd[3]);
-
-                // S4 -> R29: Quase um giro completo
-                states_simd[4] = _mm256_add_epi32(states_simd[4], data_vec);
-                states_simd[4] = _mm256_or_si256(_mm256_slli_epi32(states_simd[4], 29), _mm256_srli_epi32(states_simd[4], 3));
-                states_simd[5] = _mm256_xor_si256(states_simd[5], states_simd[4]);
-
-                // S5 -> R5: O toque sutil
-                states_simd[5] = _mm256_add_epi32(states_simd[5], data_vec);
-                states_simd[5] = _mm256_or_si256(_mm256_slli_epi32(states_simd[5], 5), _mm256_srli_epi32(states_simd[5], 27));
-                states_simd[6] = _mm256_xor_si256(states_simd[6], states_simd[5]);
-
-                // S6 -> R11: Difusão primária
-                states_simd[6] = _mm256_add_epi32(states_simd[6], data_vec);
-                states_simd[6] = _mm256_or_si256(_mm256_slli_epi32(states_simd[6], 11), _mm256_srli_epi32(states_simd[6], 21));
-                states_simd[7] = _mm256_xor_si256(states_simd[7], states_simd[6]);
-
-                // S7 -> R17: Centro da entropia
-                states_simd[7] = _mm256_add_epi32(states_simd[7], data_vec);
-                states_simd[7] = _mm256_or_si256(_mm256_slli_epi32(states_simd[7], 17), _mm256_srli_epi32(states_simd[7], 15));
-                states_simd[8] = _mm256_xor_si256(states_simd[8], states_simd[7]);
-
-                // S8 -> R25: Inversão do S0
-                states_simd[8] = _mm256_add_epi32(states_simd[8], data_vec);
-                states_simd[8] = _mm256_or_si256(_mm256_slli_epi32(states_simd[8], 25), _mm256_srli_epi32(states_simd[8], 7));
-                states_simd[9] = _mm256_xor_si256(states_simd[9], states_simd[8]);
-
-                // S9 -> R3: Curto e rápido
-                states_simd[9] = _mm256_add_epi32(states_simd[9], data_vec);
-                states_simd[9] = _mm256_or_si256(_mm256_slli_epi32(states_simd[9], 3), _mm256_srli_epi32(states_simd[9], 29));
-                states_simd[10] = _mm256_xor_si256(states_simd[10], states_simd[9]);
-
-                // S10 -> R31: O limite do bit
-                states_simd[10] = _mm256_add_epi32(states_simd[10], data_vec);
-                states_simd[10] = _mm256_or_si256(_mm256_slli_epi32(states_simd[10], 31), _mm256_srli_epi32(states_simd[10], 28));
-                states_simd[11] = _mm256_xor_si256(states_simd[11], states_simd[10]);
-
-                // S11 -> R2: Finalizador da corrente
-                states_simd[11] = _mm256_add_epi32(states_simd[11], data_vec);
-                states_simd[11] = _mm256_or_si256(_mm256_slli_epi32(states_simd[11], 2), _mm256_srli_epi32(states_simd[11], 30));
-                states_simd[0] = _mm256_xor_si256(states_simd[0], states_simd[11]);
+                st_simd_a[0] = xor(st_simd_a[0], st_simd_a[11]);
+                
 
             }
+
         }
 
         let remainder = chunks.remainder();
+        
         for (idx, &byte) in remainder.iter().enumerate() {
             let pos = idx % 12;
             self.states[pos] = self.states[pos].wrapping_add((byte as u32) ^ 0x9E3779B1);
         }
 
         for i in 0..12 {
-            unsafe {
-                self.states[i] = self.states[i].wrapping_add(self.horiz_add_avx2(states_simd[i]));
-            }
+            unsafe { self.states[i] = self.states[i].wrapping_add(self.horiz_add_avx2(st_simd_a[i])); };
         }
 
         self.apply_final_mixer_64();
 
-        self.states.iter().map(|s| {
-            let mut h = *s;
-            h ^= h >> 16;
-            h = h.wrapping_mul(0x85ebca6b);
-            h ^= h >> 13;
-            h = h.wrapping_mul(0xc2b2ae35);
-            h ^= h >> 16;
-            format!("{:08x}", h)
-        }).collect::<String>()
+        let mut result = String::with_capacity(96);
+        for &s in self.states.iter() {
+            for byte in s.to_be_bytes().iter() {
+                result.push(HEX_CHARS[(byte >> 4) as usize] as char);
+                result.push(HEX_CHARS[(byte & 0x0f) as usize] as char);
+            }
+        }
+        
+        result
 
     }
 
 
 
-    #[inline]
+    #[inline(always)]
     unsafe fn horiz_add_avx2(&self, v: __m256i) -> u32 {
         let mut arr = [0u32; 8];
-        unsafe { _mm256_storeu_si256(arr.as_mut_ptr() as *mut __m256i, v); }
+        
+        unsafe { storeu(arr.as_mut_ptr() as *mut __m256i, v) };          
+
         arr.iter().fold(0, |acc, &x| acc.wrapping_add(x))
     }
 

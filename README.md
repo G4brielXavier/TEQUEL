@@ -4,48 +4,48 @@
 ![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 ![Rust](https://img.shields.io/badge/rust-v1.70%2B-black?style=flat-square&logo=rust)
 
-*A high-performance, SIMD-accelerated cryptographic engine and KDF, built in pure Rust for the modern CPU.*
+*A high-performance, Dual-Wide SIMD cryptographic engine and hash function, built in pure Rust for modern x86_64 architectures.*
 
-**Tequel 0.7.0: The Integrity & Speed Update.** Featuring a synchronized AVX2 core, the TQL-11 engine now delivers consistent **10+ MiB/s throughput** with a "Verify-then-Decrypt" architecture. Designed for local-first security, high-speed obfuscation, and low-level systems like **MyWay CLI**.
+**Tequel 0.8.0: The Dual-Wide & Entropy Update.** Featuring a redesigned AVX2 core, the TQL-11 engine now processes 64-byte chunks per iteration, delivering a near-perfect **49.22% Avalanche Effect** and scaling to **~970 MiB/s** in parallel environments.
 
 *By Gabriel "dotxav" Xavier (@G4brielXavier)*
 
-## 🔬 Internal Architecture: TQL-11 (SIMD Edition)
+## 🔬 Internal Architecture: TQL-11 (Dual-Wide SIMD)
 
-Tequel is powered by the **TQL-11**, a custom ARX (Addition-Rotation-XOR) primitive re-engineered for **Single Instruction, Multiple Data (SIMD)**.
+Tequel is powered by the **TQL-11**, a custom ARX (Addition-Rotation-XOR) primitive engineered for high-density bit diffusion.
 
-* **Vectorized Execution:** Uses **AVX2 (256-bit)** intrinsics to process 32-byte chunks in parallel.
-* **Synchronized Phase Mapping:** Uses Global Indexing (`g_idx`) to ensure keystream alignment between SIMD blocks and scalar remainders.
-* **Authenticated Encryption:** Implements a custom MAC (Message Authentication Code) layer that verifies data integrity before decryption begins.
-* **Zero-Allocation Pipeline:** Optimized `Vec<u8>` buffers to minimize heap pressure and maximize CPU cache locality.
+* **Dual-Wide Execution:** Processes two 32-byte YMM blocks simultaneously (`ymm1` and `ymm2`) using interleaved state mapping to maximize CPU pipeline throughput.
+* **Asymmetric Index Shifting:** Offsets the internal state indices between parallel blocks to prevent bit-pattern alignment and maximize chaos.
+* **Zero-Allocation Hex Engine:** Optimized hexadecimal serialization using static lookup tables, bypassing the overhead of standard string formatting.
+* **Register-Aware Design:** Carefully tuned to utilize 14 of the 16 available YMM registers, eliminating "Register Spilling" and keeping all operations within the L1 Cache.
 
-## 📊 Performance Benchmarks (v0.7.0)
+## 📊 Performance Benchmarks (v0.8.0)
 
 Verified using `criterion.rs` on `target-cpu=native`.
 
-| Operation | Data Size | Result (v0.5.x) | **Result (v0.7.0)** | Improvement |
+| Operation | Implementation | Result (v0.7.0) | **Result (v0.8.0)** | Improvement |
 | :--- | :--- | :--- | :--- | :--- |
-| **Encryption Latency** | 1 KB | 588.8 µs | **114.0 µs** | **-80.6%** |
-| **Throughput** | 1 MB | 1.74 MiB/s | **10.38 MiB/s** | **+496%** |
-| **Throughput** | 5 MB | ~1.50 MiB/s | **10.32 MiB/s** | **+588%** |
-| **Avalanche (SAC)** | Bit-diff | 50.26% | **51.04%** | **Optimal** |
+| **Single-Core Throughput** | Scalar/SIMD | 10.38 MiB/s | **11.10 MiB/s** | **+7.2%** |
+| **Multi-Core Throughput** | Rayon Parallel | ~120 MiB/s | **~970 MiB/s** | **+708%** |
+| **Avalanche (SAC)** | Bit-diff | 51.04% | **49.22%** | **Optimal** |
+| **Serialization** | Hex Output | `format!` macro | **Zero-Alloc Table** | **O(1) Latency** |
 
 ## 🛡️ Statistical Rigor
 
 ### **1. Strict Avalanche Criterion (SAC)**
-A single bit flip in the input causes a cascading change in the output.
-- **Result:** **51.04%** (Near-perfect bit-flip distribution).
-- **Collision Resistance:** Tested over **110M+ iterations** without collisions.
+The TQL-11 primitive ensures that any single-bit change in the input cascades into a complete transformation of the state.
+- **Result:** **49.22%** (Ideal statistical randomness).
+- **Interleaving:** Uses a constant bit-twist (`0x517CC1B7`) to ensure unique entropy paths for parallel data blocks.
 
 ### **2. Shannon Entropy**
-- **Result:** **7.999986 bits/byte**. The output is statistically indistinguishable from pure white noise, making it ideal for high-entropy key derivation.
+- **Result:** **7.999991 bits/byte**. The output is statistically indistinguishable from white noise, making it a robust candidate for Key Derivation Functions (KDF).
 
 ## ⚙️ Core Features
 
-- **SIMD Optimized**: Native AVX2 support for high-speed local encryption.
-- **Authenticated Encryption**: Integrated MAC verification to prevent tampering.
-- **Zero-Copy Intent**: Byte-centric API designed for zero-copy integration.
-- **Memory Forensic Resistance**: Sensitive buffers are handled with security in mind.
+- **AVX2 Optimized**: Native 256-bit SIMD intrinsics for maximum hardware utilization.
+- **Scalable**: Built-in support for parallel processing via `Rayon`.
+- **Low Latency**: Designed for CLI tools (like **Emet**) where startup time and execution speed are critical.
+- **Minimalist**: Zero external dependencies (other than SIMD crates), keeping the binary small and secure.
 
 ## 📥 Installation
 
@@ -53,47 +53,47 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-tequel-rs = "0.7.4"
+tequel-rs = "0.8.0"
 ```
 
 ## Usage
 
-### Authenticated Encryption & Decryption
-
-```rust
-use tequel_rs::encrypt::TequelEncrypt;
-
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut teq = TequelEncrypt::new();
-    let data = b"my_data_to_protect";
-    let key = "secure_master_key";
-
-    // Encrypt returns a struct with { encrypted_data, salt, mac }
-    let encrypted = teq.encrypt(data, key)?;
-
-    // Decrypt verifies the MAC before restoring the data
-    let decrypted = teq.decrypt(&encrypted, key)?;
-
-    assert_eq!(data, decrypted.as_bytes());
-    Ok(())
-}
-```
-
-### Basic Hashing
+### High-Performance Hashing
 
 ```rust
 use tequel_rs::hash::TequelHash;
 
 fn main() {
-  let mut teq = TequelHash::new();
-  let hash = teq.tqlhash(b"data_to_hash");
+    let mut teq = TequelHash::new();
+    let data = b"data_to_hash";
+    
+    // Returns a 384-bit (96 chars) hex string
+    let hash = teq.tqlhash(data);
+    println!("TQL-11 Hash: {}", hash);
+}
+```
+
+
+### Parallel Stress Testing (Rayon)
+
+```rust
+use rayon::prelude::*;
+use tequel_rs::hash::TequelHash;
+
+fn main() {
+    let chunks: Vec<Vec<u8>> = vec![vec![0u8; 1024 * 1024]; 64]; // 64MB of data
+    
+    chunks.par_iter().for_each(|chunk| {
+        let mut teq = TequelHash::new();
+        let _ = teq.tqlhash(chunk);
+    });
 }
 ```
 
 
 ## Why the name 'Tequel'?
 
-"Tequel" is a biblical reference from the Book of Daniel: "Mene, Mene, Tequel, Parsim".
+"Tequel" is a reference from the Book of Daniel: "Mene, Mene, Tequel, Parsim".
 
 TEQUEL means "Weighed". It represents a judgment where data is weighed and its integrity verified. In this library, it stands for the cryptographic weight and the balance between speed and chaos—data secured by Tequel is weighed and found impenetrable.
 
@@ -101,4 +101,3 @@ TEQUEL means "Weighed". It represents a judgment where data is weighed and its i
 ## License
 
 **MIT License** - Build the future, keep it open.
-

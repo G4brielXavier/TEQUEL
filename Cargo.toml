@@ -1,9 +1,9 @@
 [package]
 name = "tequel-rs"
-version = "0.7.6"
+version = "0.8.0"
 edition = "2024"
 authors = ["Gabriel 'dotxav' Xavier <dotxavket@gmail.com>"]
-description = "A high-performance, chaotic AEAD encryption engine built on the TQL-11 ARX primitive."
+description = "A high-performance, Dual-Wide SIMD cryptographic engine and hash function, built in pure Rust for modern x86_64 architectures."
 license = "MIT"
 repository = "https://github.com/G4brielXavier/Tequel"
 documentation = "https://docs.rs/tequel-rs"

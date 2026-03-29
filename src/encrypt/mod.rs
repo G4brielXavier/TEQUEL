@@ -6,6 +6,9 @@ use crate::rng::TequelRng;
 
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
+
+use crate::avx2_inline::{ add, xor, storeu, loadu, setone, sub };
+
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
 #[cfg(feature = "serde")]
@@ -140,35 +143,30 @@ impl TequelEncrypt {
         unsafe {
 
             if is_x86_feature_detected!("avx2") {
-                let chunks = data.chunks_exact(32);
+                let chunks = data.chunks_exact(64);
                 let remainder = chunks.remainder();
                 
-                // let va = _mm256_set1_epi32(u32::from_be_bytes(a) as i32);
-                // let vb = _mm256_set1_epi32(u32::from_be_bytes(b) as i32);
-                // let vc = _mm256_set1_epi32(u32::from_be_bytes(c) as i32);
-                // let vd = _mm256_set1_epi32(u32::from_be_bytes(d) as i32);
-                // let ve = _mm256_set1_epi32(u32::from_be_bytes(e) as i32);
-
                 for (chunk_idx, chunk) in chunks.enumerate() {
 
-                    let byte_offset = chunk_idx * 32;
-                    let mut v_data = _mm256_loadu_si256(chunk.as_ptr() as *const __m256i);
+                    let byte_offset = chunk_idx * 32; // 0 -> 32 -> 64 -> 128 ...
+                    let mut ymm1 = loadu(chunk.as_ptr() as *const __m256i);
 
-                    v_data = _mm256_add_epi8(v_data, _mm256_set1_epi8(a[0] as i8));
-                    v_data = _mm256_xor_si256(v_data, _mm256_set1_epi8(b[0] as i8));
-                    v_data = _mm256_add_epi8(v_data, _mm256_set1_epi8(c[0] as i8));
-                    v_data = _mm256_xor_si256(v_data, _mm256_set1_epi8(d[0] as i8));
-                    v_data = _mm256_add_epi8(v_data, _mm256_set1_epi8(e[0] as i8));
+                    ymm1 = add(ymm1, setone(a[0] as i8));
+                    ymm1 = xor(ymm1, setone(b[0] as i8));
+                    ymm1 = add(ymm1, setone(c[0] as i8));
+                    ymm1 = xor(ymm1, setone(d[0] as i8));
+                    ymm1 = add(ymm1, setone(e[0] as i8));
                     
 
                     let mut expanded_key = [0u8; 32];
                     for i in 0..32 {
                         expanded_key[i] = key_crypt[(byte_offset + i) % key_crypt.len()];
                     }
-                    v_data = _mm256_xor_si256(v_data, _mm256_loadu_si256(expanded_key.as_ptr() as *const __m256i));
+                    ymm1 = xor(ymm1, loadu(expanded_key.as_ptr() as *const __m256i));
 
                     let mut out = [0u8; 32];
-                    _mm256_storeu_si256(out.as_mut_ptr() as *mut __m256i, v_data);
+                    storeu(out.as_mut_ptr() as *mut __m256i, ymm1);
+
                     res_bytes.extend_from_slice(&out);
                 
                 }
@@ -176,17 +174,16 @@ impl TequelEncrypt {
                 let processed_bytes = data.len() - remainder.len();
 
                 for (i, &byte) in remainder.iter().enumerate() {
-                    let gidx = processed_bytes + i;
+                    let g_idx = processed_bytes + i;
                     let mut curr = byte;
 
-                    curr = curr.wrapping_add(a[gidx % 4]);
+                    curr = curr.wrapping_add(a[g_idx % 4]);
+                    curr = curr ^ b[g_idx % 4];
+                    curr = curr.wrapping_add(c[g_idx % 4]);
+                    curr = curr ^ d[g_idx % 4];
+                    curr = curr.wrapping_add(e[g_idx % 4]);
 
-                    curr = curr ^ b[gidx % 4];
-                    curr = curr.wrapping_add(c[gidx % 4]);
-                    curr = curr ^ d[gidx % 4];
-                    curr = curr.wrapping_add(e[gidx % 4]);
-
-                    curr = curr ^ key_crypt[gidx % key_crypt.len()];
+                    curr = curr ^ key_crypt[g_idx % key_crypt.len()];
 
                     res_bytes.push(curr)
                 }
@@ -325,7 +322,7 @@ impl TequelEncrypt {
                 for (chunk_idx, chunk) in chunks.enumerate() {
 
                     let byte_offset = chunk_idx * 32;
-                    let mut v_data = _mm256_loadu_si256(chunk.as_ptr() as *const __m256i);
+                    let mut ymm1 = loadu(chunk.as_ptr() as *const __m256i);
 
                     // Key Expansion (32 bytes)
                     let mut expanded_key = [0u8; 32];
@@ -333,16 +330,16 @@ impl TequelEncrypt {
                         expanded_key[i] = key_encrypt_input[(byte_offset + i) % key_encrypt_input.len()];
                     }
 
-                    v_data = _mm256_xor_si256(v_data, _mm256_loadu_si256(expanded_key.as_ptr() as *const __m256i));
+                    ymm1 = xor(ymm1, loadu(expanded_key.as_ptr() as *const __m256i));
 
-                    v_data = _mm256_sub_epi8(v_data, _mm256_set1_epi8(e[0] as i8));
-                    v_data = _mm256_xor_si256(v_data, _mm256_set1_epi8(d[0] as i8));
-                    v_data = _mm256_sub_epi8(v_data, _mm256_set1_epi8(c[0] as i8));
-                    v_data = _mm256_xor_si256(v_data, _mm256_set1_epi8(b[0] as i8));
-                    v_data = _mm256_sub_epi8(v_data, _mm256_set1_epi8(a[0] as i8));
+                    ymm1 = sub(ymm1, setone(e[0] as i8));
+                    ymm1 = xor(ymm1, setone(d[0] as i8));
+                    ymm1 = sub(ymm1, setone(c[0] as i8));
+                    ymm1 = xor(ymm1, setone(b[0] as i8));
+                    ymm1 = sub(ymm1, setone(a[0] as i8));
 
                     let mut out = [0u8; 32];
-                    _mm256_storeu_si256(out.as_mut_ptr() as *mut __m256i, v_data);
+                    storeu(out.as_mut_ptr() as *mut __m256i, ymm1);
                     res_bytes.extend_from_slice(&out);
 
                 }
@@ -352,17 +349,17 @@ impl TequelEncrypt {
 
                 for (i, &byte) in remainder.iter().enumerate() {
         
-                    let gidx = processed_bytes + i;
+                    let g_idx = processed_bytes + i;
                     let mut curr = byte;
         
-                    curr ^= key_encrypt_input[gidx % key_encrypt_input.len()];
+                    curr ^= key_encrypt_input[g_idx % key_encrypt_input.len()];
 
-                    curr = curr.wrapping_sub(e[gidx % 4]);
-                    curr ^= d[gidx % 4];
-                    curr = curr.wrapping_sub(c[gidx % 4]);
-                    curr ^= b[gidx % 4];
+                    curr = curr.wrapping_sub(e[g_idx % 4]);
+                    curr ^= d[g_idx % 4];
+                    curr = curr.wrapping_sub(c[g_idx % 4]);
+                    curr ^= b[g_idx % 4];
 
-                    curr = curr.wrapping_sub(a[gidx % 4]);
+                    curr = curr.wrapping_sub(a[g_idx % 4]);
         
                     res_bytes.push(curr)
         

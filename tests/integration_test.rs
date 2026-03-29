@@ -1,7 +1,6 @@
+use std::collections::HashSet;
 use tequel_rs::hash::TequelHash;
 use tequel_rs::encrypt::TequelEncrypt;
-use tequel_rs::error::TequelError;
-use tequel_rs::rng::TequelRng;
 
 
 
@@ -176,4 +175,35 @@ fn test_tequel_key_sensitivity() {
         Err(_) => println!("Integrity Security: Key Wrong Blocked")
     }
 
+}
+
+
+
+#[test]
+fn test_collision_resistance() {
+    let mut seen_hashes = HashSet::new();
+    let iterations = 1_000_000;
+    let mut collisions = 0;
+
+    let mut hasher = TequelHash::new();
+    
+    println!("Starting 1 million hashes test...");
+
+    for i in 0..iterations {
+        
+        let input = format!("payload_data_generation_{}", i);
+        
+        let hash = hasher.tqlhash(input.as_bytes());
+
+        if !seen_hashes.insert(hash) {
+            collisions += 1;
+        }
+
+    }
+
+    println!("✅ Test finished!");
+    println!("📊 Total Iterations: {}", iterations);
+    println!("💥 Collisions found: {}", collisions);
+
+    assert_eq!(collisions, 0, "Tequel failed! Houve colisão em 1 milhão de inputs.");
 }
