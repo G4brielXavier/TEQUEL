@@ -341,9 +341,6 @@ impl TequelEncrypt {
         let mut cus_teq_hash = TequelHash::new();
         let comb_mixmac = cus_teq_hash.tqlhash(&mixmac_buffer).to_lowercase();
 
-        println!("{}", tequel_encryption.mac.to_lowercase());
-        println!("{}", comb_mixmac);
-
         let is_valid = self.compare_macs(tequel_encryption.mac.to_lowercase().as_bytes(), comb_mixmac.as_bytes());
 
         if !is_valid {
