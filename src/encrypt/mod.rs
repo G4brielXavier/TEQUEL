@@ -1,3 +1,19 @@
+/*
+ * Tequel-rs: High-Density 384-bit Cryptographic Hash Engine
+ * Copyright (C) 2026 Gabriel Xavier (dotxav)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ */
+
+
 use std::num::ParseIntError;
 
 use crate::hash::TequelHash;
@@ -19,7 +35,7 @@ use serde::{Serialize, Deserialize};
 /// 
 /// You use this struct to use encrypt in Tequel.
 /// ```rust
-/// use tequel_rs::encrypt::TequelEncrypt;
+/// use tequel::encrypt::TequelEncrypt;
 /// 
 /// fn main() {
 ///     let mut teq_encrypt: TequelEncrypt = TequelEncrypt::new();
@@ -36,7 +52,7 @@ pub struct TequelEncrypt {
 /// `TequelEncryption` is a struct that represent final encrypt, when `TequelEncrypt` is finish, it generates a `TequelEncryption` with MAC, Salt and Encrypted Data.
 /// 
 /// ```rust
-/// use tequel_rs::encrypt::{ TequelEncrypt, TequelEncryption };
+/// use tequel::encrypt::{ TequelEncrypt, TequelEncryption };
 /// 
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// 
@@ -104,7 +120,7 @@ impl TequelEncrypt {
     /// # Example
     ///
     /// ```rust
-    /// use tequel_rs::encrypt::TequelEncrypt;
+    /// use tequel::encrypt::TequelEncrypt;
     ///
     /// let mut teq = TequelEncrypt::new();
     /// let secret_data = b"Tequel: Weighted and Measured";
@@ -278,7 +294,7 @@ impl TequelEncrypt {
     /// # Example
     ///
     /// ```rust
-    /// use tequel_rs::encrypt::TequelEncrypt;
+    /// use tequel::encrypt::TequelEncrypt;
     /// 
     /// fn main() {
     /// 

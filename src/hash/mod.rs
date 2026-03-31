@@ -1,3 +1,18 @@
+/*
+ * Tequel-rs: High-Density 384-bit Cryptographic Hash Engine
+ * Copyright (C) 2026 Gabriel Xavier (dotxav)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ */
+
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 use crate::avx2_inline::{ add, loadu, or, rota_lf, rota_rg, setone_i32, setzero, xor, horiz_add_avx2 };
@@ -74,7 +89,7 @@ impl TequelHash {
     ///
     /// # Example
     /// ```rust
-    /// use tequel_rs::hash::TequelHash;
+    /// use tequel::hash::TequelHash;
     /// 
     /// let mut tequel = TequelHash::new();
     /// let data = b"secret_data";
@@ -245,7 +260,7 @@ impl TequelHash {
     ///
     /// # Example
     /// ```rust
-    /// use tequel_rs::hash::TequelHash;
+    /// use tequel::hash::TequelHash;
     /// 
     /// let mut tequel = TequelHash::new();
     /// let data = b"secret_data";
@@ -383,7 +398,7 @@ impl TequelHash {
     ///
     /// # Example
     /// ```rust
-    /// use tequel_rs::hash::TequelHash;
+    /// use tequel::hash::TequelHash;
     /// 
     /// let mut tequel = TequelHash::new();
     /// let data = b"secret_message";
@@ -444,7 +459,7 @@ impl TequelHash {
     ///
     /// # Example
     /// ```rust
-    /// use tequel_rs::hash::TequelHash;
+    /// use tequel::hash::TequelHash;
     /// 
     /// fn main() {
     ///     let mut teq = TequelHash::new();

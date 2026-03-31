@@ -1,8 +1,8 @@
 use std::collections::HashSet;
-use tequel_rs::hash::TequelHash;
-use tequel_rs::encrypt::TequelEncrypt;
+use tequel::hash::TequelHash;
+use tequel::encrypt::TequelEncrypt;
 use std::time::Instant;
-// use tequel_rs::tools::merkle_nodes;
+// use tequel::tools::merkle_nodes;
 
 #[test]
 fn test_dif_hash_is_equal_from_bytes() {

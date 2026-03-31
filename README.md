@@ -102,7 +102,7 @@ tequel-rs = "1.0.1"
 ### High-Performance Hashing
 
 ```rust
-use tequel_rs::hash::TequelHash;
+use tequel::hash::TequelHash;
 
 fn main() {
     let mut teq = TequelHash::new();
@@ -114,6 +114,33 @@ fn main() {
 }
 ```
 
+### Interoperability (in C)
+
+```c
+#include "tequel.h"
+#include <stdio.h>
+
+int main() {
+
+    uint8_t input[] = "data";
+    uint8_t hash[48];
+
+    tequel_hash_raw(input, sizeof(input), hash);
+
+    printf("Tequel Hash: ");
+
+    for(int i = 0; i < 48; i++) {
+        printf("%02x", hash[i]);
+    }
+
+    printf("\n");
+
+    return 0;
+
+}
+```
+
+
 ## Why the name 'Tequel'?
 
 "Tequel" is a reference from the Book of Daniel: "*Mene, Mene, Tequel, Parsim*".
@@ -121,6 +148,6 @@ fn main() {
 **TEQUEL** means "**Weighed**". It represents a judgment where data is weighed and its integrity verified. In this library, it stands for the cryptographic weight and the balance between speed and chaos—data secured by Tequel is weighed and found impenetrable.
 
 
-## License
+## AGPLv3 License
 
-**MIT License** - Build the future, keep it open.
+Tequel is licensed under AGPLv3. For commercial inquiries, custom integrations, or closed-source licensing, please contact me at **dotxavket@gmail.com**.

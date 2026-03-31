@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use tequel_rs::hash::TequelHash; // Ajuste para o nome real da sua struct/função
+    use tequel::hash::TequelHash; // Ajuste para o nome real da sua struct/função
 
     // Função auxiliar para contar a diferença de bits entre dois hashes
     fn bit_diff(h1: &[u8], h2: &[u8]) -> f64 {

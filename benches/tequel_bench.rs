@@ -1,5 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion, Throughput, BenchmarkId};
-use tequel_rs::encrypt::TequelEncrypt; 
+use tequel::encrypt::TequelEncrypt; 
 use rayon::prelude::*;
 use std::time::Duration;
 use sha2::{Sha384, Digest};
@@ -35,7 +35,7 @@ fn bench_parallel_stress(c: &mut Criterion) {
             data_chunks.par_iter().for_each(|chunk| {
                 // Use a função de hash diretamente se puder
                 // Isso evita o overhead de toda a struct de criptografia
-                let mut teq = tequel_rs::hash::TequelHash::new(); 
+                let mut teq = tequel::hash::TequelHash::new(); 
                 black_box(teq.tqlhash(black_box(chunk)));
             });
         })
@@ -59,7 +59,7 @@ fn bench_comparison(c: &mut Criterion) {
     });
 
     // Testando o Tequel (Seu Motor)
-    let mut teq = tequel_rs::hash::TequelHash::new();
+    let mut teq = tequel::hash::TequelHash::new();
     group.bench_function("Tequel_TQL11_384", |b| {
         b.iter(|| {
             black_box(teq.tqlhash(black_box(&data)));
@@ -94,7 +94,7 @@ fn bench_multi_core_battle(c: &mut Criterion) {
     group.bench_function("Parallel_Tequel_TQL11", |b| {
         b.iter(|| {
             data_chunks.par_iter().for_each(|chunk| {
-                let mut teq = tequel_rs::hash::TequelHash::new();
+                let mut teq = tequel::hash::TequelHash::new();
                 let _ = black_box(teq.tqlhash(black_box(chunk)));
             });
         })
