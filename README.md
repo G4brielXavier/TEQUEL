@@ -6,11 +6,11 @@
 
 *A high-performance, Register-Aware SIMD cryptographic engine and hash function, built in pure Rust for mission-critical data integrity.*
 
-**Tequel 0.9.0: The "Iron-Clad" Performance Update.** Featuring a complete core refactor, the TQL-11 engine now utilizes **Register Pinning** and **2x Loop Unrolling**, delivering a massive **+125% throughput increase** in single-core environments and stabilizing at a rock-solid **~23 MiB/s** for large-scale data.
+**Tequel +1.0.0: The "Iron-Clad" Performance Update.** Featuring a complete core refactor, the TQL-11 engine now utilizes **Register Pinning** and **2x Loop Unrolling**, delivering a massive **+125% throughput increase** in single-core environments and stabilizing at a rock-solid **~23 MiB/s** for large-scale data.
 
-*By Gabriel "dotxav" Xavier (@G4brielXavier)*
+> *By Gabriel "dotxav" Xavier (@G4brielXavier)*
 
-## 🔬 Internal Architecture: TQL-11 (v0.9.0)
+## 🔬 Internal Architecture: TQL-11 (v+1.0.0)
 
 Tequel is powered by the **TQL-11**, a custom ARX (Addition-Rotation-XOR) primitive engineered for high-density bit diffusion and hardware-level efficiency.
 
@@ -27,12 +27,12 @@ With a **50.14% Strict Avalanche Criterion (SAC)**, Tequel ensures that flipping
 
 
 
-## 📊 Performance Benchmarks (v0.9.0)
+## 📊 Performance Benchmarks (v1.0.0)
 
 ### Single-Core Evolution (Criterion)
 Verified on `target-cpu=native` (AVX2).
 
-| Metric | v0.8.0 | **v0.9.0 (Current)** | Improvement |
+| Metric | v0.8.0 | **v1.0.0 (Current)** | Improvement |
 | :--- | :--- | :--- | :--- |
 | **Small Data (1024 bytes)** | 11.10 MiB/s | **22.33 MiB/s** | **+125.5%** |
 | **Medium Data (65KB)** | 10.90 MiB/s | **23.38 MiB/s** | **+114.5%** |
@@ -59,13 +59,42 @@ Verified on `target-cpu=native` (AVX2).
 * **Rayon Ready**: Native scaling for multi-threaded file integrity verification.
 * **Zero Dependencies**: Pure Rust, no external overhead.
 
+## ⚖️ SHA-384 x TQL-11 (Comparison)
+
+> **Developer Note:** This comparison is a snapshot of current progress. SHA-2 (SHA-384) has 20+ years of global optimization and micro-code refinement. **TQL-11** was built from scratch in **30 days** to serve as the backbone of a high-performance, deterministic ecosystem.
+
+### 📊 Benchmark: 100MB Multi-Core Stress Test
+The following data represents a heavy-load scenario using **Rayon** for parallelism and **AVX2 SIMD** intrinsics.
+
+| Metric | SHA-384 (Standard) | **TQL-11 (Tequel v1.0.0)** |
+| :--- | :--- | :--- |
+| **Execution Time** | ~53ms | **~95ms** |
+| **Throughput (Parallel)** | ~1.8 GiB/s | **1.1 GiB/s** |
+| **Stability (Jitter)** | Fluctuating | **Ultra-Stable (Low Variance)** |
+| **Security Width** | 384-bit | **384-bit Native ARX** |
+| **Entropy Score** | - | **7.9999981 / 8.0** |
+
+![Benchmark Comparison](./img/shas384xtql11.png)
+![Benchmark Comparison](./img/throughput.png)
+
+### 🛡️ Why TQL-11?
+
+While SHA-384 is a sprint champion for small, serial tasks, **TQL-11** was engineered for **Industrial Scalability** (DPP - Digital Product Passport). Its core strengths are:
+
+1. **Deterministic Latency:** The scatter plot analysis shows near-zero timing outliers. In a production line (IoT/DPP), predictability is more valuable than raw peak speed.
+2. **Parallel-First Design:** Optimized for saturating modern NVMe bandwidth. At **1.1 GiB/s**, TQL-11 processes **500,000 items in just 12 seconds**.
+3. **Cryptographic Density:** With an entropy of **7.9999981** and an avalanche effect (Diff) of **50.14%**, it delivers top-tier bit dispersion, ensuring maximum integrity for every "carimbo" in the ecosystem.
+
+> *TQL-11 isn't just a hash; it's a mission-critical engine for high-volume data integrity.*
+
+
 ## 📥 Installation
 
 Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-tequel-rs = "1.0.0"
+tequel-rs = "1.0.1"
 ```
 
 ## Usage
