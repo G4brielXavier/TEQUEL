@@ -6,6 +6,13 @@
 
 Tequel is a high-performance cryptographic integrity engine and hash function implemented in pure Rust, optimized for AVX2-capable x86_64 architectures.
 
+## ⚠️ Security Warning: Experimental Status
+
+TQL-11 is a **novel and non-standard** cryptographic primitive. 
+* **Not Peer-Reviewed:** This algorithm has not undergone formal cryptanalysis by third-party researchers.
+* **Intended Use:** Designed for data integrity and high-speed telemetry verification in controlled environments (e.g., Industrial IoT, DPP). 
+* **Disclaimer:** Do not use for high-value financial transactions or sensitive PII (Personally Identifiable Information) without understanding the risks of using non-standardized primitives.
+
 ## Technical Architecture (TQL-11)
 
 The TQL-11 core utilizes an ARX (Addition-Rotation-XOR) primitive designed for high-density bit diffusion and hardware-level efficiency.
