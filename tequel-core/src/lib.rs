@@ -13,25 +13,38 @@
  * GNU Affero General Public License for more details.
  */
 
-pub mod error;
+
 pub mod hash;
-pub mod encrypt;
 pub mod rng;
 pub mod avx2_inline;
+mod entropy_test;
+
+
+
+
+
+
 
 
 // --- FFI Boundary ---
 
 #[unsafe(no_mangle)]
-pub extern "C" fn tequel_hash_raw(data: *const u8, len: usize, out: *mut u8) {
-    let input = unsafe { std::slice::from_raw_parts(data, len) };
+pub unsafe extern "C" fn tequel_tqlhash(data: *const u8, len: usize, out: *mut u8) {
 
+    if out.is_null() { return; }
+    
     let mut teq = hash::TequelHash::new();
-    let hash_result = teq.tqlhash_raw(input);
 
-    unsafe {
-        std::ptr::copy_nonoverlapping(hash_result.as_ptr(), out, 48);
-    }
+    let input = if len == 0 || data.is_null() {
+        &[]
+    } else {
+        unsafe { std::slice::from_raw_parts(data, len) }
+    };
+
+    let hr = teq.tqlhash_raw(input);
+
+    to_out(&hr, out);
+
 } 
 
 
@@ -52,4 +65,16 @@ pub extern "C" fn isv_tequel_hash_raw(hash_ptr: *const u8, input_ptr: *const u8,
 
     result == 0
 
+}
+
+
+
+fn to_out(hash_r: &[u8], out: *mut u8) {
+    unsafe {
+        std::ptr::copy_nonoverlapping(
+            hash_r.as_ptr(), 
+            out, 
+            48
+        );
+    }
 }

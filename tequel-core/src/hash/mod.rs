@@ -15,6 +15,9 @@
 
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
+use core::arch::x86_64::_mm_prefetch;
+use core::arch::x86_64::_MM_HINT_T0;
+
 use crate::avx2_inline::{ add, loadu, or, rota_lf, rota_rg, setone_i32, setzero, xor, horiz_add_avx2 };
 use std::hint::black_box;
 
@@ -28,13 +31,8 @@ macro_rules! teq_direct {
 
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
-#[cfg(feature = "serde")]
-use serde::{Serialize, Deserialize};
-
-
 /// ```TequelHash``` provides hash functions, custom iterations and salt. <br><br>
 #[derive(Debug, Zeroize, ZeroizeOnDrop, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TequelHash {
     pub states: [u32; 12],
     pub salt: String,
@@ -123,14 +121,18 @@ impl TequelHash {
         let mut s10 = unsafe { setzero() };
         let mut s11 = unsafe { setzero() };
 
-        let mut chunks = input.chunks_exact(128);
+        let mut chunks = input.chunks_exact(256);
 
         for chunk in chunks.by_ref() {
 
             unsafe {
 
+                _mm_prefetch(chunk.as_ptr().add(256) as *const i8, _MM_HINT_T0);
+
                 let bl_a = &chunk[..64];
-                let bl_b = &chunk[64..];
+                let bl_b = &chunk[64..128];
+                let bl_c = &chunk[128..];
+                let bl_d = &chunk[..256];
 
                 let ymm_a1 = loadu(bl_a.as_ptr() as *const __m256i);
                 let ymm_a2 = xor(loadu(bl_a.as_ptr().add(32) as *const __m256i), setone_i32(0x517CC1B7));
@@ -163,6 +165,38 @@ impl TequelHash {
                 teq_direct!(s9,  s10, 5,  27,   ymm_b2);
                 teq_direct!(s10, s11, 3,  29,   ymm_b1);
                 teq_direct!(s11, s0,  2,  30,   ymm_b2);
+
+                let ymm_c1 = loadu(bl_c.as_ptr() as *const __m256i);
+                let ymm_c2 = xor(loadu(bl_c.as_ptr().add(32) as *const __m256i), setone_i32(0x517CC1B7));
+
+                teq_direct!(s0,  s1,  7,  25,   ymm_c1);
+                teq_direct!(s1,  s2,  31, 28,   ymm_c2);
+                teq_direct!(s2,  s3,  25, 7,    ymm_c1);
+                teq_direct!(s3,  s4,  23, 9,    ymm_c2);
+                teq_direct!(s4,  s5,  13, 19,   ymm_c1);
+                teq_direct!(s5,  s6,  29, 3,    ymm_c2);
+                teq_direct!(s6,  s7,  19, 13,   ymm_c1);
+                teq_direct!(s7,  s8,  17, 15,   ymm_c2);
+                teq_direct!(s8,  s9,  11, 21,   ymm_c1);
+                teq_direct!(s9,  s10, 5,  27,   ymm_c2);
+                teq_direct!(s10, s11, 3,  29,   ymm_c1);
+                teq_direct!(s11, s0,  2,  30,   ymm_c2);
+
+                let ymm_d1 = loadu(bl_d.as_ptr() as *const __m256i);
+                let ymm_d2 = xor(loadu(bl_d.as_ptr().add(32) as *const __m256i), setone_i32(0x517CC1B7));
+
+                teq_direct!(s0,  s1,  7,  25,   ymm_d1);
+                teq_direct!(s1,  s2,  31, 28,   ymm_d2);
+                teq_direct!(s2,  s3,  25, 7,    ymm_d1);
+                teq_direct!(s3,  s4,  23, 9,    ymm_d2);
+                teq_direct!(s4,  s5,  13, 19,   ymm_d1);
+                teq_direct!(s5,  s6,  29, 3,    ymm_d2);
+                teq_direct!(s6,  s7,  19, 13,   ymm_d1);
+                teq_direct!(s7,  s8,  17, 15,   ymm_d2);
+                teq_direct!(s8,  s9,  11, 21,   ymm_d1);
+                teq_direct!(s9,  s10, 5,  27,   ymm_d2);
+                teq_direct!(s10, s11, 3,  29,   ymm_d1);
+                teq_direct!(s11, s0,  2,  30,   ymm_d2);
 
                 s0 = xor(s0, s11);
 

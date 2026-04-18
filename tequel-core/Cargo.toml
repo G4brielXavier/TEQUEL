@@ -1,0 +1,45 @@
+[package]
+name = "tequel-rs"
+version = "2.0.0"
+edition = "2024"
+authors = ["Gabriel 'dotxav' Xavier <dotxavket@gmail.com>"]
+description = "A high-performance 2x Loop Unrolling SIMD/AVX2 integrity engine and hash function, built in pure Rust for modern x86_64 architectures."
+license = "AGPL-3.0-or-later"
+repository = "https://github.com/G4brielXavier/Tequel"
+documentation = "https://docs.rs/tequel-rs"
+readme = "README.md"
+keywords = ["cryptography", "encryption", "aead", "security", "rust"]
+categories = ["cryptography", "algorithms", "no-std"]
+exclude = ["/tests", ".gitignore"]
+
+[lib]
+name = "tequel"
+crate-type = ["rlib", "cdylib", "staticlib"]
+
+[dependencies]
+getrandom = "0.4.2"
+zeroize = { version = "1.7", features = ["derive"] }
+rayon = { version = "1.8", optional = true }
+dashmap = "6.1.0"
+hex = "0.4.3"
+num_cpus = "1.17.0"
+
+[dev-dependencies]
+criterion = { version = "0.8.2", features = ["html_reports"] }
+sha2 = "0.11.0"
+
+[features]
+default = ["parallel"]
+parallel = ["dep:rayon"]
+
+[[bench]]
+name = "tequel_bench"
+harness = false
+
+[profile.bench]
+panic = "unwind"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

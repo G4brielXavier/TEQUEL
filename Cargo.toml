@@ -1,47 +1,6 @@
-[package]
-name = "tequel-rs"
-version = "1.2.2"
-edition = "2024"
-authors = ["Gabriel 'dotxav' Xavier <dotxavket@gmail.com>"]
-description = "A high-performance, Dual-Wide SIMD cryptographic engine and hash function, built in pure Rust for modern x86_64 architectures."
-license = "AGPL-3.0-or-later"
-repository = "https://github.com/G4brielXavier/Tequel"
-documentation = "https://docs.rs/tequel-rs"
-readme = "README.md"
-keywords = ["cryptography", "encryption", "aead", "security", "rust"]
-categories = ["cryptography", "algorithms", "no-std"]
-exclude = ["/tests", ".gitignore"]
-
-[lib]
-name = "tequel"
-crate-type = ["rlib", "cdylib"]
-
-[dependencies]
-serde = { version = "1.0", features = ["derive"], optional = true }
-getrandom = "0.2"
-zeroize = { version = "1.7", features = ["derive"] }
-rayon = { version = "1.8", optional = true }
-hex = "0.4.3"
-
-[dev-dependencies]
-serde_json = "1.0"
-criterion = { version = "0.5", features = ["html_reports"] }
-sha2 = "0.10"
-
-[features]
-default = ["parallel"]
-parallel = ["dep:rayon"]
-serde = ["dep:serde"]
-
-[[bench]]
-name = "tequel_bench"
-harness = false
-
-[profile.bench]
-panic = "unwind"
-
-[profile.release]
-opt-level = 3
-lto = true
-codegen-units = 1
-panic = "abort"
+[workspace]
+members = [
+    "tequel-core",
+    "tequel-vault",
+]
+resolver = "2"

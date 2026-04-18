@@ -1,7 +1,7 @@
 # TQL-11 Specification: The Pinned-State Vectorized Chaos Engine
 
 **Technical Specification +v1.0.0** | **Author:** Gabriel Xavier (@G4brielXavier)  
-**Status:** Validated (**50.14% Avalanche** / **7.8 GiB/s Single-Core** / **~25.13 GiB/s Parallel**)
+**Status:** Validated (**50.14% Avalanche** / **7.89 GiB/s Single-Core** / **~25.13 GiB/s Parallel**)
 
 ---
 

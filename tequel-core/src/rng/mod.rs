@@ -15,8 +15,6 @@
 
 
 use std::{time::SystemTime, vec};
-use getrandom::getrandom;
-
 
 
 /// TequelRng is a struct that controls RNG functions. <br><br>
@@ -65,7 +63,7 @@ impl TequelRng {
     pub fn rand_deep_string(&self, len: usize) -> String {
 
         let mut buffer = vec![0u8; len];
-        getrandom(&mut buffer).unwrap();
+        getrandom::fill(&mut buffer).expect("Error to fill buffer");
 
         for (i, byte) in buffer.iter_mut().enumerate() {
             let magic = [0x6a, 0x09, 0xe6, 0x67, 0xbb, 0x67, 0xae, 0x85];
@@ -81,7 +79,7 @@ impl TequelRng {
         
         let mut buffer = [0u8; 4];
 
-        getrandom(&mut buffer).unwrap();
+        getrandom::fill(&mut buffer).unwrap();
 
         u32::from_ne_bytes(buffer)
 

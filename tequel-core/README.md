@@ -40,13 +40,19 @@ Benchmarks conducted using Criterion on x86_64 hardware.
 | 1 MB | **7.70 GiB/s** | Single-core saturation |
 | 100 MB (Parallel) | **21.92 GiB/s** | Multi-threaded (Rayon) 
 
+### Comparative Analysis (Single-Core 1MB)
+| Algorithm | Throughput | Implementation |
+| :--- | :--- | :--- |
+| SHA-384 | ~604 MiB/s | Standard ARX |
+| **Tequel (TQL-11)** | **~7.70 GiB/s** | **Native AVX2** |
+
 ## Statistical Validation
 
 * **Strict Avalanche Criterion (SAC):** 51.14%
 * **Shannon Entropy:** 7.999991 bits/byte
 * **Heap Usage:** Zero dynamic allocations during hashing process
 * **Determinism:** Guaranteed across x86_64-avx2 platforms
-* **Collision Test:** Zero collision & ~197k hashes/s (8 bytes) in 100 million iterations
+* **Items Test**: ~54,345 items/s
 
 ## Usage
 

@@ -1,30 +1,10 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion, Throughput, BenchmarkId};
-use tequel::encrypt::TequelEncrypt; 
+use criterion::{criterion_group, criterion_main, Criterion, Throughput};
+use std::hint::black_box;
+
 use rayon::prelude::*;
-use std::time::Duration;
 use sha2::{Sha384, Digest};
 
-fn bench_throughput(c: &mut Criterion) {
-    let mut group = c.benchmark_group("tequel_core_performance");
-    group.measurement_time(Duration::from_secs(10));
-    
 
-    let mut teq = TequelEncrypt::new();
-    let key = "master_key_v1.2.0";
-
-    for size in [1024, 64 * 1024, 1024 * 1024].iter() {
-        let data = vec![0u8; *size];
-        group.throughput(Throughput::Bytes(*size as u64));
-
-        group.bench_with_input(BenchmarkId::from_parameter(size), size, |b, _| {
-            b.iter(|| {
-                let _ = black_box(teq.encrypt(black_box(&data), black_box(key)));
-            })
-        });
-    }
-
-    group.finish();
-}
 
 fn bench_parallel_stress(c: &mut Criterion) {
     let data_chunks: Vec<Vec<u8>> = (0..64).map(|_| vec![0u8; 1024 * 1024]).collect();
@@ -97,5 +77,12 @@ fn bench_multi_core_battle(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, bench_multi_core_battle, bench_comparison, bench_throughput, bench_parallel_stress);
+
+criterion_group!(
+    benches, 
+    bench_multi_core_battle, 
+    bench_comparison,
+    bench_parallel_stress, 
+);
+
 criterion_main!(benches);

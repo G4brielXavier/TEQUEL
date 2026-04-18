@@ -34,4 +34,4 @@ let teq = TequelHash::new()
 
 
 ## Performance Benchmarks (AVX2)
-Tequel (TQL-11) is designed to saturate the memory bus on modern x86_64 CPUs, achieving ~1.2 GiB/s (in parallel with `rayon`) and ~23 MiB/s in single-core by utilizing 256-bit YMM registers and instruction 2x unrolling.
+Tequel (TQL-11) is designed to saturate the memory bus on modern x86_64 CPUs, achieving ~22.13 GiB/s (in parallel with `rayon`) and ~7.7 GiB/s in single-core by utilizing 256-bit YMM registers and instruction 2x unrolling.
