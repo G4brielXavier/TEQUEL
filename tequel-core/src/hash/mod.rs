@@ -332,40 +332,76 @@ impl TequelHash {
 
             unsafe {
 
+                _mm_prefetch(chunk.as_ptr().add(256) as *const i8, _MM_HINT_T0);
+
                 let bl_a = &chunk[..64];
-                let bl_b = &chunk[64..];
+                let bl_b = &chunk[64..128];
+                let bl_c = &chunk[128..];
+                let bl_d = &chunk[..256];
 
                 let ymm_a1 = loadu(bl_a.as_ptr() as *const __m256i);
                 let ymm_a2 = xor(loadu(bl_a.as_ptr().add(32) as *const __m256i), setone_i32(0x517CC1B7));
 
-                teq_direct!(s0, s1, 7, 25,   ymm_a1);
-                teq_direct!(s1, s2, 31, 28,  ymm_a2);
-                teq_direct!(s2, s3, 25, 7,   ymm_a1);
-                teq_direct!(s3, s4, 23, 9,   ymm_a2);
-                teq_direct!(s4, s5, 13, 19,  ymm_a1);
-                teq_direct!(s5, s6, 29, 3,   ymm_a2);
-                teq_direct!(s6, s7, 19, 13,  ymm_a1);
-                teq_direct!(s7, s8, 17, 15,  ymm_a2);
-                teq_direct!(s8, s9, 11, 21,  ymm_a1);
-                teq_direct!(s9, s10, 5, 27,  ymm_a2);
-                teq_direct!(s10, s11, 3, 29, ymm_a1);
-                teq_direct!(s11, s0, 2, 30,  ymm_a2);
+                teq_direct!(s0,  s1,  7,  25,   ymm_a1);
+                teq_direct!(s1,  s2,  31, 28,   ymm_a2);
+                teq_direct!(s2,  s3,  25, 7,    ymm_a1);
+                teq_direct!(s3,  s4,  23, 9,    ymm_a2);
+                teq_direct!(s4,  s5,  13, 19,   ymm_a1);
+                teq_direct!(s5,  s6,  29, 3,    ymm_a2);
+                teq_direct!(s6,  s7,  19, 13,   ymm_a1);
+                teq_direct!(s7,  s8,  17, 15,   ymm_a2);
+                teq_direct!(s8,  s9,  11, 21,   ymm_a1);
+                teq_direct!(s9,  s10, 5,  27,   ymm_a2);
+                teq_direct!(s10, s11, 3,  29,   ymm_a1);
+                teq_direct!(s11, s0,  2,  30,   ymm_a2);
 
                 let ymm_b1 = loadu(bl_b.as_ptr() as *const __m256i);
                 let ymm_b2 = xor(loadu(bl_b.as_ptr().add(32) as *const __m256i), setone_i32(0x517CC1B7));
 
-                teq_direct!(s0, s1, 7, 25,   ymm_b1);
-                teq_direct!(s1, s2, 31, 28,  ymm_b2);
-                teq_direct!(s2, s3, 25, 7,   ymm_b1);
-                teq_direct!(s3, s4, 23, 9,   ymm_b2);
-                teq_direct!(s4, s5, 13, 19,  ymm_b1);
-                teq_direct!(s5, s6, 29, 3,   ymm_b2);
-                teq_direct!(s6, s7, 19, 13,  ymm_b1);
-                teq_direct!(s7, s8, 17, 15,  ymm_b2);
-                teq_direct!(s8, s9, 11, 21,  ymm_b1);
-                teq_direct!(s9, s10, 5, 27,  ymm_b2);
-                teq_direct!(s10, s11, 3, 29, ymm_b1);
-                teq_direct!(s11, s0, 2, 30,  ymm_b2);
+                teq_direct!(s0,  s1,  7,  25,   ymm_b1);
+                teq_direct!(s1,  s2,  31, 28,   ymm_b2);
+                teq_direct!(s2,  s3,  25, 7,    ymm_b1);
+                teq_direct!(s3,  s4,  23, 9,    ymm_b2);
+                teq_direct!(s4,  s5,  13, 19,   ymm_b1);
+                teq_direct!(s5,  s6,  29, 3,    ymm_b2);
+                teq_direct!(s6,  s7,  19, 13,   ymm_b1);
+                teq_direct!(s7,  s8,  17, 15,   ymm_b2);
+                teq_direct!(s8,  s9,  11, 21,   ymm_b1);
+                teq_direct!(s9,  s10, 5,  27,   ymm_b2);
+                teq_direct!(s10, s11, 3,  29,   ymm_b1);
+                teq_direct!(s11, s0,  2,  30,   ymm_b2);
+
+                let ymm_c1 = loadu(bl_c.as_ptr() as *const __m256i);
+                let ymm_c2 = xor(loadu(bl_c.as_ptr().add(32) as *const __m256i), setone_i32(0x517CC1B7));
+
+                teq_direct!(s0,  s1,  7,  25,   ymm_c1);
+                teq_direct!(s1,  s2,  31, 28,   ymm_c2);
+                teq_direct!(s2,  s3,  25, 7,    ymm_c1);
+                teq_direct!(s3,  s4,  23, 9,    ymm_c2);
+                teq_direct!(s4,  s5,  13, 19,   ymm_c1);
+                teq_direct!(s5,  s6,  29, 3,    ymm_c2);
+                teq_direct!(s6,  s7,  19, 13,   ymm_c1);
+                teq_direct!(s7,  s8,  17, 15,   ymm_c2);
+                teq_direct!(s8,  s9,  11, 21,   ymm_c1);
+                teq_direct!(s9,  s10, 5,  27,   ymm_c2);
+                teq_direct!(s10, s11, 3,  29,   ymm_c1);
+                teq_direct!(s11, s0,  2,  30,   ymm_c2);
+
+                let ymm_d1 = loadu(bl_d.as_ptr() as *const __m256i);
+                let ymm_d2 = xor(loadu(bl_d.as_ptr().add(32) as *const __m256i), setone_i32(0x517CC1B7));
+
+                teq_direct!(s0,  s1,  7,  25,   ymm_d1);
+                teq_direct!(s1,  s2,  31, 28,   ymm_d2);
+                teq_direct!(s2,  s3,  25, 7,    ymm_d1);
+                teq_direct!(s3,  s4,  23, 9,    ymm_d2);
+                teq_direct!(s4,  s5,  13, 19,   ymm_d1);
+                teq_direct!(s5,  s6,  29, 3,    ymm_d2);
+                teq_direct!(s6,  s7,  19, 13,   ymm_d1);
+                teq_direct!(s7,  s8,  17, 15,   ymm_d2);
+                teq_direct!(s8,  s9,  11, 21,   ymm_d1);
+                teq_direct!(s9,  s10, 5,  27,   ymm_d2);
+                teq_direct!(s10, s11, 3,  29,   ymm_d1);
+                teq_direct!(s11, s0,  2,  30,   ymm_d2);
 
                 s0 = xor(s0, s11);
 
@@ -390,9 +426,34 @@ impl TequelHash {
         }
 
 
-        let remainder = chunks.remainder();
-        
-        for (idx, &byte) in remainder.iter().enumerate() {
+        let remainder_128 = chunks.remainder();
+        let mut chunks_64 = remainder_128.chunks_exact(64);
+
+        for chunk in chunks_64.by_ref() {
+            unsafe {
+
+                let ymm_a1 = loadu(chunk.as_ptr() as *const __m256i);
+                let ymm_a2 = xor(loadu(chunk.as_ptr().add(32) as *const __m256i), setone_i32(0x517CC1B7));
+
+                teq_direct!(s0,  s1,  7,  25,   ymm_a1);
+                teq_direct!(s1,  s2,  31, 28,   ymm_a2);
+                teq_direct!(s2,  s3,  25, 7,    ymm_a1);
+                teq_direct!(s3,  s4,  23, 9,    ymm_a2);
+                teq_direct!(s4,  s5,  13, 19,   ymm_a1);
+                teq_direct!(s5,  s6,  29, 3,    ymm_a2);
+                teq_direct!(s6,  s7,  19, 13,   ymm_a1);
+                teq_direct!(s7,  s8,  17, 15,   ymm_a2);
+                teq_direct!(s8,  s9,  11, 21,   ymm_a1);
+                teq_direct!(s9,  s10, 5,  27,   ymm_a2);
+                teq_direct!(s10, s11, 3,  29,   ymm_a1);
+                teq_direct!(s11, s0,  2,  30,   ymm_a2);
+
+            }
+        }
+
+        let final_remainder = chunks_64.remainder();
+
+        for (idx, &byte) in final_remainder.iter().enumerate() {
             let pos = idx % 12;
             self.states[pos] = self.states[pos].wrapping_add((byte as u32) ^ 0x9E3779B1);
         }

@@ -707,6 +707,20 @@ dependencies = [
 [[package]]
 name = "tequel-rs"
 version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9bcfe454a4989d02ae635d475001e3af85f683e49fdc2b272bdbefcb92dc9017"
+dependencies = [
+ "dashmap",
+ "getrandom",
+ "hex",
+ "num_cpus",
+ "rayon",
+ "zeroize",
+]
+
+[[package]]
+name = "tequel-rs"
+version = "2.1.0"
 dependencies = [
  "criterion",
  "dashmap",
@@ -724,7 +738,7 @@ version = "1.0.0"
 dependencies = [
  "serde",
  "serde_json",
- "tequel-rs",
+ "tequel-rs 2.0.0",
  "zeroize",
 ]
 
